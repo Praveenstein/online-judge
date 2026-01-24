@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.database import engine, Base
 from app.routes import auth_routes
+from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,6 +19,14 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],      # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],      # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],      # Allows all headers
+)
 
 # Include our modular routes
 app.include_router(auth_routes.router)
