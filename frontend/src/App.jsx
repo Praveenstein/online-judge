@@ -1,11 +1,11 @@
-import Auth from './components/Auth'
+import Auth from "./components/Auth";
 
 function App() {
-  return (
-    <div className="App">
-      <Auth />
-    </div>
-  )
+	return (
+		<div className="App">
+			<Auth />
+		</div>
+	);
 }
 
-export default App
+export default App;
