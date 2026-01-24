@@ -1,13 +1,10 @@
-import { useState } from 'react'
-import './App.css'
+import Auth from './components/Auth'
 
 function App() {
   return (
-    <>
-      <div className='bg-red-700'>
-        helloo
-      </div>
-    </>
+    <div className="App">
+      <Auth />
+    </div>
   )
 }
 
