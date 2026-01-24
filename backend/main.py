@@ -7,6 +7,7 @@ from app.routes import auth_routes
 async def lifespan(app: FastAPI):
     # This runs on startup
     # It creates the tables in Postgres if they don't exist
+    print("ok")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     
