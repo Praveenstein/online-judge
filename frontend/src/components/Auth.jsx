@@ -14,16 +14,28 @@ const Auth = () => {
 		e.preventDefault();
 		setError("");
 
-		const endpoint = isLogin ? "/auth/login" : "/auth/register";
-		const payload = { email, password };
-
 		try {
-			const response = await axios.post(`http://localhost:8000${endpoint}`, payload);
-
 			if (isLogin) {
+				// OAuth2 standard: Send as Form Data
+				const params = new URLSearchParams();
+				params.append("username", email); // form_data.username in FastAPI
+				params.append("password", password);
+
+				const response = await axios.post("http://localhost:8000/auth/login", params, {
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+					},
+				});
+
 				localStorage.setItem("token", response.data.access_token);
 				alert("Logged in successfully!");
 			} else {
+				// Registration: Send as standard JSON
+				await axios.post("http://localhost:8000/auth/register", {
+					email,
+					password,
+				});
+
 				alert("Account created! You can now login.");
 				setIsLogin(true);
 			}
