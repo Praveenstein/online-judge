@@ -4,7 +4,9 @@ import axios from "axios";
 // Built-In Imports.
 import { useState } from "react";
 
-const Auth = () => {
+const Auth = ({ onLogin }) => {
+	const [loading, setLoading] = useState(false);
+
 	const [isLogin, setIsLogin] = useState(true);
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -12,35 +14,27 @@ const Auth = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		setLoading(true);
 		setError("");
 
 		try {
 			if (isLogin) {
-				// OAuth2 standard: Send as Form Data
 				const params = new URLSearchParams();
-				params.append("username", email); // form_data.username in FastAPI
+				params.append("username", email);
 				params.append("password", password);
 
-				const response = await axios.post("http://localhost:8000/auth/login", params, {
-					headers: {
-						"Content-Type": "application/x-www-form-urlencoded",
-					},
-				});
-
+				const response = await axios.post("http://localhost:8000/auth/login", params);
 				localStorage.setItem("token", response.data.access_token);
-				alert("Logged in successfully!");
+				onLogin(); // Trigger the redirect/state update in App.jsx
 			} else {
-				// Registration: Send as standard JSON
-				await axios.post("http://localhost:8000/auth/register", {
-					email,
-					password,
-				});
-
-				alert("Account created! You can now login.");
+				await axios.post("http://localhost:8000/auth/register", { email, password });
+				alert("Account created!");
 				setIsLogin(true);
 			}
 		} catch (err) {
 			setError(err.response?.data?.detail || "Something went wrong");
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -95,16 +89,23 @@ const Auth = () => {
 					{error && <p className="text-red-500 text-xs mt-2">{error}</p>}
 
 					<button
-						type="submit" // Explicitly marked as submit
-						className="w-full bg-slate-950 text-white py-3 rounded-md text-sm font-medium hover:bg-slate-800 transition-all mt-4"
+						type="submit"
+						disabled={loading}
+						className="w-full bg-slate-950 text-white py-3 rounded-md text-sm font-medium hover:bg-slate-800 disabled:bg-slate-400 transition-all mt-4 flex justify-center items-center"
 					>
-						{isLogin ? "Sign In" : "Create Account"}
+						{loading ? (
+							<div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+						) : isLogin ? (
+							"Sign In"
+						) : (
+							"Create Account"
+						)}
 					</button>
 				</form>
 
 				<div className="mt-8 text-center">
 					<button
-						type="button" // Explicitly marked as button to avoid form submission
+						type="button"
 						onClick={() => setIsLogin(!isLogin)}
 						className="text-xs text-slate-500 hover:text-slate-950 underline underline-offset-4"
 					>
