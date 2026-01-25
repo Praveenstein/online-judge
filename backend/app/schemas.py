@@ -4,6 +4,8 @@ This module defines the Data Transfer Objects (DTOs) used for validating
 request payloads and formatting API responses for user and token data.
 """
 
+from typing import Optional
+
 # External Imports.
 from pydantic import BaseModel, ConfigDict, EmailStr
 
@@ -43,3 +45,23 @@ class Token(BaseModel):
 
     access_token: str
     token_type: str
+
+
+class ProblemBase(BaseModel):
+    title: str
+    statement: str
+    difficulty: str
+
+class ProblemCreate(ProblemBase):
+    pass
+
+class ProblemUpdate(BaseModel):
+    title: Optional[str] = None
+    statement: Optional[str] = None
+    difficulty: Optional[str] = None
+
+class ProblemOut(ProblemBase):
+    id: int
+    creator_id: int
+
+    model_config = ConfigDict(from_attributes=True)
