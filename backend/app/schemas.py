@@ -119,3 +119,33 @@ class ProblemOut(ProblemBase):
     )
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ExecutionRequest(BaseModel):
+    """Represents a request to execute a snippet of source code.
+
+    Attributes:
+        code: The source code string to be executed.
+        language: The programming language of the code (e.g., 'python', 'cpp', 'java').
+        input_data: Optional string representing standard input (stdin) for the program.
+    """
+
+    code: str = Field(..., description="The source code to execute.")
+    language: str = Field(..., description="The programming language identifier.")
+    input_data: Optional[str] = Field(
+        default="", description="Optional stdin for the process."
+    )
+
+
+class ExecutionResponse(BaseModel):
+    """Represents the output and status of a code execution request.
+
+    Attributes:
+        stdout: The standard output produced by the execution.
+        stderr: The standard error produced by the execution.
+        exit_code: The process exit code (0 usually indicates success).
+    """
+
+    stdout: str = Field(..., description="Captured standard output.")
+    stderr: str = Field(..., description="Captured standard error.")
+    exit_code: int = Field(..., description="The process return code.")
