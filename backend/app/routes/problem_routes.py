@@ -127,3 +127,17 @@ async def delete_problem(
     await db.delete(problem)
     await db.commit()
     return {"message": "Problem deleted"}
+
+
+@router.get("/{problem_id}", response_model=ProblemOut)
+async def get_problem(
+    problem_id: int, db: AsyncSession = Depends(get_db)
+) -> ProblemOut:
+    """Retrieve a single problem by its ID."""
+    result = await db.execute(select(Problem).where(Problem.id == problem_id))
+    problem = result.scalar_one_or_none()
+
+    if not problem:
+        raise HTTPException(status_code=404, detail="Problem not found")
+
+    return problem

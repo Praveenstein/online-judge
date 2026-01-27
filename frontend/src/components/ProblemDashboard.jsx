@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = "http://localhost:8000";
 
@@ -12,6 +13,8 @@ const ProblemDashboard = ({ onLogout }) => {
 
 	const token = localStorage.getItem("token");
 	const headers = { Authorization: `Bearer ${token}` };
+
+	const navigate = useNavigate();
 
 	// Wrap fetchProblems in useCallback
 	const fetchProblems = useCallback(async () => {
@@ -139,7 +142,10 @@ const ProblemDashboard = ({ onLogout }) => {
 							<span className="text-slate-300 font-mono text-xs">
 								{p.id.toString().padStart(3, "0")}
 							</span>
-							<h2 className="text-md text-slate-800 group-hover:text-slate-950 cursor-pointer">
+							<h2
+								onClick={() => navigate(`/solve/${p.id}`)}
+								className="text-md text-slate-800 group-hover:text-blue-600 cursor-pointer font-medium"
+							>
 								{p.title}
 							</h2>
 							<span
