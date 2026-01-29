@@ -41,7 +41,7 @@ class Settings(BaseSettings):
         """
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}?ssl=require"
         )
 
     # Configuration for Pydantic to read from a .env file and ignore extra variables
