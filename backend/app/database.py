@@ -16,7 +16,16 @@ from .config import settings
 
 # Initialize the async engine using the database URL from settings
 # echo=True logs all generated SQL statements (useful for development)
-engine = create_async_engine(settings.DATABASE_URL, echo=True)
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=True,
+    # This ensures the connection is verified before use
+    pool_pre_ping=True,
+    # Force SSL requirement if not connecting to a local dev DB
+    connect_args={"ssl": "require"}
+    if "localhost" not in settings.POSTGRES_SERVER
+    else {},
+)
 
 # Factory for creating new AsyncSession instances
 async_session = async_sessionmaker(engine, expire_on_commit=False)
