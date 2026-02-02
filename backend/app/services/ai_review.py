@@ -31,7 +31,9 @@ SYSTEM_PROMPT: str = (
     "style, security, and best practices. Keep your replies concise and actionable."
 )
 
-DEFAULT_MODEL_NAME: str = "llama-3.3-70b"  # Overridden by settings.CEREBRAS_MODEL when set
+DEFAULT_MODEL_NAME: str = (
+    "llama-3.3-70b"  # Overridden by settings.CEREBRAS_MODEL when set
+)
 
 
 class CodeReviewOutput(BaseModel):
@@ -40,7 +42,9 @@ class CodeReviewOutput(BaseModel):
     Used as the agent's output_type so responses are validated and typed.
     """
 
-    code_review: str = Field(..., description="The review text (feedback and suggestions).")
+    code_review: str = Field(
+        ..., description="The review text (feedback and suggestions)."
+    )
 
 
 def _make_agent() -> Agent[None, CodeReviewOutput]:
@@ -53,7 +57,9 @@ def _make_agent() -> Agent[None, CodeReviewOutput]:
     """
     api_key: str = getattr(settings, "CEREBRAS_API_KEY", "") or ""
     if not api_key:
-        raise ValueError("CEREBRAS_API_KEY is not set. Add it to your .env to use AI code review.")
+        raise ValueError(
+            "CEREBRAS_API_KEY is not set. Add it to your .env to use AI code review."
+        )
 
     model_name: str = getattr(settings, "CEREBRAS_MODEL", "") or DEFAULT_MODEL_NAME
     model = CerebrasModel(

@@ -39,7 +39,9 @@ router = APIRouter(prefix="/ai-review", tags=["ai-code-review"])
         },
         401: {"description": "Not authenticated. Provide a valid Bearer token."},
         503: {"description": "AI code review is unavailable (e.g. missing API key)."},
-        500: {"description": "Internal error during review (e.g. model or network failure)."},
+        500: {
+            "description": "Internal error during review (e.g. model or network failure)."
+        },
     },
 )
 async def ai_review_post(
