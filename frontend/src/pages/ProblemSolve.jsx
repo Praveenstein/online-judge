@@ -1,6 +1,7 @@
 import Editor from "@monaco-editor/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { useParams } from "react-router-dom";
 
 const ProblemSolve = () => {
@@ -11,6 +12,9 @@ const ProblemSolve = () => {
 	const [inputData, setInputData] = useState("");
 	const [output, setOutput] = useState({ stdout: "", stderr: "", exit_code: null });
 	const [loading, setLoading] = useState(false);
+	const [reviewLoading, setReviewLoading] = useState(false);
+	const [review, setReview] = useState(null);
+	const [reviewError, setReviewError] = useState(null);
 
 	useEffect(() => {
 		axios
@@ -32,6 +36,24 @@ const ProblemSolve = () => {
 			setOutput({ stdout: "", stderr: "Execution Error: " + err.message, exit_code: 1 });
 		}
 		setLoading(false);
+	};
+
+	const handleAiReview = async () => {
+		setReviewLoading(true);
+		setReview(null);
+		setReviewError(null);
+		const token = localStorage.getItem("token");
+		try {
+			const response = await axios.post(
+				"http://localhost:8000/ai-review/",
+				{ code, language },
+				{ headers: { Authorization: `Bearer ${token}` } }
+			);
+			setReview(response.data);
+		} catch (err) {
+			setReviewError(err.response?.data?.detail ?? err.message);
+		}
+		setReviewLoading(false);
 	};
 
 	if (!problem) return <div className="p-10 text-center text-gray-500">Loading problem...</div>;
@@ -71,15 +93,26 @@ const ProblemSolve = () => {
 						<option value="cpp">C++</option>
 						<option value="golang">Go</option>
 					</select>
-					<button
-						onClick={handleRun}
-						disabled={loading}
-						className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${
-							loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-						}`}
-					>
-						{loading ? "Running..." : "Run Code"}
-					</button>
+					<div className="flex gap-2">
+						<button
+							onClick={handleRun}
+							disabled={loading}
+							className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${
+								loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+							}`}
+						>
+							{loading ? "Running..." : "Run Code"}
+						</button>
+						<button
+							onClick={handleAiReview}
+							disabled={reviewLoading}
+							className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${
+								reviewLoading ? "bg-gray-400" : "bg-emerald-600 hover:bg-emerald-700"
+							}`}
+						>
+							{reviewLoading ? "Reviewing..." : "AI Review"}
+						</button>
+					</div>
 				</div>
 
 				{/* Monaco Editor */}
@@ -112,6 +145,27 @@ const ProblemSolve = () => {
 						</div>
 					</div>
 				</div>
+
+				{/* AI Review Section */}
+				{(review || reviewError) && (
+					<div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+						<div className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">
+							AI Code Review
+							{review?.model_used && (
+								<span className="ml-2 text-xs font-normal text-gray-500">({review.model_used})</span>
+							)}
+						</div>
+						{reviewError ? (
+							<div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+								{reviewError}
+							</div>
+						) : (
+							<div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm max-h-48 overflow-y-auto prose prose-sm prose-slate max-w-none prose-headings:font-semibold prose-headings:text-gray-800 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-code:bg-gray-200 prose-code:px-1 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-pre:bg-gray-800 prose-pre:text-gray-100">
+								<ReactMarkdown>{review?.code_review ?? ""}</ReactMarkdown>
+							</div>
+						)}
+					</div>
+				)}
 			</div>
 		</div>
 	);
