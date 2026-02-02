@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # Optional: Cerebras API key and model for AI code review (set in .env).
+    CEREBRAS_API_KEY: str = ""
+    CEREBRAS_MODEL: str = "gpt-oss-120b"
+
     @property
     def DATABASE_URL(self) -> str:
         """Constructs the asynchronous PostgreSQL connection string.

@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Local Imports.
 from app.database import engine, Base
-from app.routes import auth_routes, problem_routes, execute_routes
+from app.routes import auth_routes, problem_routes, execute_routes, ai_review_routes
 
 
 @asynccontextmanager
@@ -56,6 +56,7 @@ app.add_middleware(
 app.include_router(auth_routes.router)
 app.include_router(problem_routes.router)
 app.include_router(execute_routes.router)
+app.include_router(ai_review_routes.router)
 
 
 @app.get("/")

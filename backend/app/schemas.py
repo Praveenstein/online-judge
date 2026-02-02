@@ -149,3 +149,47 @@ class ExecutionResponse(BaseModel):
     stdout: str = Field(..., description="Captured standard output.")
     stderr: str = Field(..., description="Captured standard error.")
     exit_code: int = Field(..., description="The process return code.")
+
+
+# ---------------------------------------------------------------------------
+# AI Code Review schemas
+# ---------------------------------------------------------------------------
+
+
+class AICodeReviewRequest(BaseModel):
+    """Request body for submitting code to the AI code review endpoint.
+
+    Attributes:
+        code: The source code string to be reviewed.
+        language: Optional programming language hint (e.g. 'python', 'javascript')
+            for better review context. Defaults to empty string.
+    """
+
+    code: str = Field(
+        ...,
+        min_length=1,
+        description="The source code to be reviewed by the AI.",
+        examples=['print("Hello, World!")'],
+    )
+    language: Optional[str] = Field(
+        default="",
+        description="Optional language hint for review context (e.g. python, javascript).",
+    )
+
+
+class AICodeReviewResponse(BaseModel):
+    """Response from the AI code review endpoint.
+
+    Attributes:
+        code_review: The AI-generated review text (feedback, suggestions, issues).
+        model_used: Optional identifier of the model used (e.g. cerebras model name).
+    """
+
+    code_review: str = Field(
+        ...,
+        description="The AI-generated code review (feedback and suggestions).",
+    )
+    model_used: Optional[str] = Field(
+        default=None,
+        description="Identifier of the model used for the review, if available.",
+    )
