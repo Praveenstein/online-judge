@@ -8,6 +8,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "bcrypt>=5.0.0",
     "fastapi[standard]>=0.128.0",
+    "pydantic-ai-slim[openai,cerebras]>=1.51.0",
     "pydantic-settings>=2.12.0",
     "python-jose>=3.5.0",
     "sqlalchemy>=2.0.46",

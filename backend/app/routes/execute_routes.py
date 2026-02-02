@@ -8,9 +8,11 @@ through the CodeExecutor, and returning the execution results.
 import subprocess
 
 # External Imports.
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 # Local Imports.
+from ..auth.utils import get_current_user
+from ..models import User
 from ..schemas import ExecutionRequest, ExecutionResponse
 from ..services.compiler import CodeExecutor
 
@@ -18,11 +20,15 @@ router = APIRouter(prefix="/execute", tags=["compiler"])
 
 
 @router.post("/", response_model=ExecutionResponse)
-async def run_code(request: ExecutionRequest) -> ExecutionResponse:
+async def run_code(
+    request: ExecutionRequest,
+    current_user: User = Depends(get_current_user),
+) -> ExecutionResponse:
     """Endpoint to receive and execute code snippets.
 
     Args:
         request: An ExecutionRequest object containing code, language, and input.
+        current_user: The authenticated user (required).
 
     Returns:
         An ExecutionResponse containing stdout, stderr, and the exit code.
