@@ -16,9 +16,11 @@ const ProblemSolve = () => {
 	const [review, setReview] = useState(null);
 	const [reviewError, setReviewError] = useState(null);
 
+	const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 	useEffect(() => {
 		axios
-			.get(`http://localhost:8000/problems/${id}`)
+			.get(`${API_BASE}/problems/${id}`)
 			.then((res) => setProblem(res.data))
 			.catch((err) => console.error("Error fetching problem", err));
 	}, [id]);
@@ -26,11 +28,12 @@ const ProblemSolve = () => {
 	const handleRun = async () => {
 		setLoading(true);
 		try {
-			const response = await axios.post("http://localhost:8000/execute/", {
+			const token = localStorage.getItem("token");
+			const response = await axios.post(`${API_BASE}/execute/`, {
 				language,
 				code,
-				input_data: inputData,
-			});
+				input_data: inputData
+			}, { headers: { Authorization: `Bearer ${token}` } });
 			setOutput(response.data);
 		} catch (err) {
 			setOutput({ stdout: "", stderr: "Execution Error: " + err.message, exit_code: 1 });
@@ -45,7 +48,7 @@ const ProblemSolve = () => {
 		const token = localStorage.getItem("token");
 		try {
 			const response = await axios.post(
-				"http://localhost:8000/ai-review/",
+				`${API_BASE}/ai-review/`,
 				{ code, language },
 				{ headers: { Authorization: `Bearer ${token}` } }
 			);

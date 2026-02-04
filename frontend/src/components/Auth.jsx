@@ -12,6 +12,8 @@ const Auth = ({ onLogin }) => {
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
 
+	const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
@@ -23,11 +25,11 @@ const Auth = ({ onLogin }) => {
 				params.append("username", email);
 				params.append("password", password);
 
-				const response = await axios.post("http://localhost:8000/auth/login", params);
+				const response = await axios.post(`${API_BASE}/auth/login`, params);
 				localStorage.setItem("token", response.data.access_token);
 				onLogin(); // Trigger the redirect/state update in App.jsx
 			} else {
-				await axios.post("http://localhost:8000/auth/register", { email, password });
+				await axios.post(`${API_BASE}/auth/register`, { email, password });
 				alert("Account created!");
 				setIsLogin(true);
 			}
