@@ -15,6 +15,9 @@ const ProblemSolve = () => {
 	const [reviewLoading, setReviewLoading] = useState(false);
 	const [review, setReview] = useState(null);
 	const [reviewError, setReviewError] = useState(null);
+	const [testResults, setTestResults] = useState(null);
+	const [testsLoading, setTestsLoading] = useState(false);
+	const [testsError, setTestsError] = useState(null);
 
 	const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -27,18 +30,48 @@ const ProblemSolve = () => {
 
 	const handleRun = async () => {
 		setLoading(true);
+		setTestResults(null);
+		setTestsError(null);
 		try {
 			const token = localStorage.getItem("token");
-			const response = await axios.post(`${API_BASE}/execute/`, {
-				language,
-				code,
-				input_data: inputData
-			}, { headers: { Authorization: `Bearer ${token}` } });
+			const response = await axios.post(
+				`${API_BASE}/execute/`,
+				{
+					language,
+					code,
+					input_data: inputData
+				},
+				{ headers: { Authorization: `Bearer ${token}` } }
+			);
 			setOutput(response.data);
 		} catch (err) {
 			setOutput({ stdout: "", stderr: "Execution Error: " + err.message, exit_code: 1 });
 		}
 		setLoading(false);
+	};
+
+	const handleRunTests = async () => {
+		setTestsLoading(true);
+		setTestsError(null);
+		setTestResults(null);
+
+		try {
+			const token = localStorage.getItem("token");
+			const response = await axios.post(
+				`${API_BASE}/execute/tests`,
+				{
+					language,
+					code,
+					problem_id: Number(id)
+				},
+				{ headers: { Authorization: `Bearer ${token}` } }
+			);
+			setTestResults(response.data);
+		} catch (err) {
+			setTestsError(err.response?.data?.detail ?? err.message);
+		}
+
+		setTestsLoading(false);
 	};
 
 	const handleAiReview = async () => {
@@ -107,6 +140,15 @@ const ProblemSolve = () => {
 							{loading ? "Running..." : "Run Code"}
 						</button>
 						<button
+							onClick={handleRunTests}
+							disabled={testsLoading}
+							className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${
+								testsLoading ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"
+							}`}
+						>
+							{testsLoading ? "Running Tests..." : "Run Tests"}
+						</button>
+						<button
 							onClick={handleAiReview}
 							disabled={reviewLoading}
 							className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${
@@ -147,6 +189,67 @@ const ProblemSolve = () => {
 							)}
 						</div>
 					</div>
+					{/* Test Results Section */}
+					{(testResults || testsError) && (
+						<div className="mt-2 bg-white border border-gray-200 rounded-lg p-3 shadow-sm max-h-64 overflow-y-auto">
+							<div className="flex items-center justify-between mb-2">
+								<div className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+									Test Cases
+								</div>
+								{testResults && (
+									<div
+										className={`px-2 py-1 rounded-full text-xs font-semibold ${
+											testResults.all_passed
+												? "bg-emerald-100 text-emerald-700"
+												: "bg-red-100 text-red-700"
+										}`}
+									>
+										{testResults.passed_tests}/{testResults.total_tests} Passed
+									</div>
+								)}
+							</div>
+							{testsError ? (
+								<div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs">
+									{testsError}
+								</div>
+							) : (
+								<table className="w-full text-xs text-left border-collapse">
+									<thead>
+										<tr className="border-b border-gray-200 text-gray-600">
+											<th className="py-1 pr-2">#</th>
+											<th className="py-1 pr-2">Input</th>
+											<th className="py-1 pr-2">Expected</th>
+											<th className="py-1 pr-2">Output</th>
+											<th className="py-1 pr-2 text-center">Status</th>
+										</tr>
+									</thead>
+									<tbody>
+										{testResults?.results?.map((t, idx) => (
+											<tr key={idx} className="border-b border-gray-100 last:border-0">
+												<td className="py-1 pr-2 text-gray-500">{idx + 1}</td>
+												<td className="py-1 pr-2 font-mono whitespace-pre-wrap text-gray-700">
+													{t.input_data}
+												</td>
+												<td className="py-1 pr-2 font-mono text-gray-700">{t.expected_output}</td>
+												<td className="py-1 pr-2 font-mono text-gray-700">{t.actual_output}</td>
+												<td className="py-1 pr-2 text-center">
+													<span
+														className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+															t.passed
+																? "bg-emerald-100 text-emerald-700"
+																: "bg-red-100 text-red-700"
+														}`}
+													>
+														{t.passed ? "Passed" : "Failed"}
+													</span>
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							)}
+						</div>
+					)}
 				</div>
 
 				{/* AI Review Section */}
