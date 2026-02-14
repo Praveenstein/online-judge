@@ -5,7 +5,7 @@ request payloads and formatting API responses for user and token data.
 """
 
 # Built-In Imports.
-from typing import Optional
+from typing import Optional, List
 
 # External Imports.
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -149,6 +149,58 @@ class ExecutionResponse(BaseModel):
     stdout: str = Field(..., description="Captured standard output.")
     stderr: str = Field(..., description="Captured standard error.")
     exit_code: int = Field(..., description="The process return code.")
+
+
+class TestCaseResult(BaseModel):
+    """Represents the outcome of running a single test case."""
+
+    input_data: str = Field(..., description="The stdin provided to the program.")
+    expected_output: str = Field(
+        ..., description="The expected standard output for this test case."
+    )
+    actual_output: str = Field(
+        ..., description="The actual standard output produced by the program."
+    )
+    passed: bool = Field(
+        ..., description="Whether the actual output matched the expected output."
+    )
+    stderr: str = Field(
+        ..., description="Captured standard error for this specific test case."
+    )
+    exit_code: int = Field(
+        ..., description="The process return code for this specific test case."
+    )
+
+
+class TestExecutionRequest(BaseModel):
+    """Request body for executing code against predefined test cases.
+
+    Notes:
+        For now, all problems are treated as 'sum of two numbers' problems.
+        The backend uses a fixed set of test cases and does not persist anything
+        to the database.
+    """
+
+    code: str = Field(..., description="The source code to execute against test cases.")
+    language: str = Field(..., description="The programming language identifier.")
+    problem_id: int = Field(
+        ..., description="The problem identifier (currently informational only)."
+    )
+
+
+class TestExecutionResponse(BaseModel):
+    """Aggregated result of running code against multiple test cases."""
+
+    results: List[TestCaseResult] = Field(
+        ..., description="Per-test execution results and pass/fail status."
+    )
+    total_tests: int = Field(..., description="Total number of test cases executed.")
+    passed_tests: int = Field(
+        ..., description="Number of test cases that passed successfully."
+    )
+    all_passed: bool = Field(
+        ..., description="True if and only if all test cases passed."
+    )
 
 
 # ---------------------------------------------------------------------------
