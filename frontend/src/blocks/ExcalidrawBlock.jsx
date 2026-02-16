@@ -1,6 +1,6 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { Excalidraw } from "@excalidraw/excalidraw";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Modal, Button, ActionIcon, Tooltip, Group } from "@mantine/core";
 // import { IconEdit, IconMaximize, IconTrash } from "@tabler/icons-react"; // Removed as not installed // Assuming tabler icons are available via Mantine or similar, checking package.json might be needed. 
 // If tabler icons are not installed, I will use simple text or unicode or svg. 
@@ -23,8 +23,16 @@ export const ExcalidrawBlock = createReactBlockSpec(
         render: (props) => {
             const [opened, setOpened] = useState(false);
 
+            const [excalidrawAPI, setExcalidrawAPI] = useState(null);
+
             // Parse data safely
             const initialData = JSON.parse(props.block.props.data || "[]");
+
+            useEffect(() => {
+                if (excalidrawAPI && initialData) {
+                    excalidrawAPI.updateScene({ elements: initialData });
+                }
+            }, [initialData, excalidrawAPI]);
 
             const handleSave = (elements, appState) => {
                 // Save elements
@@ -72,8 +80,14 @@ export const ExcalidrawBlock = createReactBlockSpec(
                             color="blue"
                             onClick={() => setOpened(true)}
                             style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
+                            leftSection={
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M4 13.5V4a2 2 0 0 1 2-2h8.5L20 7.5V20a2 2 0 0 1-2 2h-5.5"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                            }
                         >
-                            Edit / Maximize
+                            Edit
                         </Button>
                     </div>
 
@@ -100,6 +114,7 @@ export const ExcalidrawBlock = createReactBlockSpec(
                                     viewModeEnabled={true}
                                     zenModeEnabled={true}
                                     gridModeEnabled={false}
+                                    excalidrawAPI={(api) => setExcalidrawAPI(api)}
                                     UIGptions={{ canvasActions: { loadScene: false, saveToActiveFile: false, toggleTheme: false, saveAsImage: false, export: false }, canvasBackgroundColor: "white" }}
                                 />
                             </div>
