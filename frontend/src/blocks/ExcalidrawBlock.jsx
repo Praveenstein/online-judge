@@ -46,9 +46,9 @@ export const ExcalidrawBlock = createReactBlockSpec(
                     style={{
                         width: "100%",
                         padding: "0",
-                        border: "1px solid #e2e8f0",
+                        border: "1px solid var(--border-default)",
                         borderRadius: "12px",
-                        background: "#ffffff",
+                        background: "var(--bg-primary)",
                         overflow: "hidden",
                         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                         transition: "all 0.2s ease-in-out",
@@ -126,9 +126,9 @@ export const ExcalidrawBlock = createReactBlockSpec(
                                     alignItems: "center",
                                     justifyContent: "center",
                                     height: "100%",
-                                    background: "#f8fafc",
+                                    background: "var(--bg-secondary)",
                                     cursor: "pointer",
-                                    color: "#64748b"
+                                    color: "var(--text-secondary)"
                                 }}
                                 onClick={() => setOpened(true)}
                             >

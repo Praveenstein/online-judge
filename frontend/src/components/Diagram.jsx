@@ -1,31 +1,16 @@
 import { Excalidraw } from "@excalidraw/excalidraw";
 
-function Diagram() {
+const Diagram = () => {
 	return (
-		<div style={{
-			display: "flex",
-			flexDirection: "column",
-			height: "100vh",
-			width: "100vw",
-			overflow: "hidden"
-		}}>
-			<h1 style={{
-				textAlign: "center",
-				margin: "1rem 0",
-				fontSize: "1.5rem",
-				fontWeight: "bold"
-			}}>
+		<div className="flex flex-col h-[calc(100vh-100px)] w-full overflow-hidden bg-[var(--bg-primary)] rounded-lg border border-[var(--border-default)]">
+			<h1 className="text-center py-4 text-xl font-bold text-[var(--text-primary)] border-b border-[var(--border-default)] bg-[var(--bg-secondary)]">
 				Excalidraw Diagram
 			</h1>
-			<div style={{
-				flex: 1,
-				width: "100%",
-				minHeight: 0
-			}}>
+			<div className="flex-1 w-full min-h-0">
 				<Excalidraw />
 			</div>
 		</div>
 	);
-}
+};
 
 export default Diagram;

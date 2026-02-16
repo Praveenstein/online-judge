@@ -45,9 +45,9 @@ export default function Notes() {
 
 
 	return (
-		<div className="p-8">
-			<h1 className="text-2xl font-bold mb-4">My Notes</h1>
-			<div className="border rounded-lg p-4 shadow-sm bg-gray-50 min-h-[500px]">
+		<div className="h-full flex flex-col gap-4">
+			<h1 className="text-2xl font-bold text-[var(--text-primary)]">My Notes</h1>
+			<div className="flex-1 border border-[var(--border-default)] rounded-lg p-4 shadow-sm bg-[var(--bg-primary)] min-h-[500px]">
 				<BlockNoteView editor={editor} theme="light" slashMenu={false}>
 					<SuggestionMenuController
 						triggerCharacter={"/"}

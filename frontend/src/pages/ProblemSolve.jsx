@@ -3,6 +3,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useParams } from "react-router-dom";
+import Button from "../components/ui/Button";
 
 const ProblemSolve = () => {
 	const { id } = useParams();
@@ -92,96 +93,98 @@ const ProblemSolve = () => {
 		setReviewLoading(false);
 	};
 
-	if (!problem) return <div className="p-10 text-center text-gray-500">Loading problem...</div>;
+	if (!problem) return <div className="p-10 text-center text-[var(--text-tertiary)]">Loading problem...</div>;
 
 	return (
-		<div className="flex h-[calc(100vh-64px)] w-full gap-2 p-2 bg-gray-50">
+		<div className="flex h-[calc(100vh-64px)] w-full gap-4 p-4 bg-[var(--bg-secondary)]">
 			{/* Left Side: Problem Description */}
-			<div className="w-1/2 overflow-y-auto bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-				<h1 className="text-2xl font-bold text-gray-800 mb-2">{problem.title}</h1>
+			<div className="w-1/2 overflow-y-auto bg-[var(--bg-primary)] rounded-lg border border-[var(--border-default)] p-6 shadow-sm">
+				<h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">{problem.title}</h1>
 				<div className="flex items-center gap-3 mb-4">
 					<span
-						className={`px-2 py-1 rounded text-xs font-semibold ${
-							problem.difficulty === "Easy"
-								? "bg-green-100 text-green-700"
+						className={`px-2 py-1 rounded text-xs font-semibold uppercase tracking-wider ${problem.difficulty === "Easy"
+								? "bg-[var(--color-success-light)] text-[var(--color-success)]"
 								: problem.difficulty === "Medium"
-									? "bg-yellow-100 text-yellow-700"
-									: "bg-red-100 text-red-700"
-						}`}
+									? "bg-[var(--color-warning-light)] text-[var(--color-warning)]"
+									: "bg-[var(--color-error-light)] text-[var(--color-error)]"
+							}`}
 					>
 						{problem.difficulty}
 					</span>
 				</div>
-				<hr className="mb-4" />
-				<div className="prose max-w-none text-gray-700 leading-relaxed">{problem.statement}</div>
+				<hr className="mb-4 border-[var(--border-default)]" />
+				<div className="prose max-w-none text-[var(--text-primary)] leading-relaxed">
+					<ReactMarkdown>{problem.statement}</ReactMarkdown>
+				</div>
 			</div>
 
 			{/* Right Side: Editor & Output */}
-			<div className="w-1/2 flex flex-col gap-2">
+			<div className="w-1/2 flex flex-col gap-4">
 				{/* Controls */}
-				<div className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
+				<div className="flex items-center justify-between bg-[var(--bg-primary)] p-3 rounded-lg border border-[var(--border-default)] shadow-sm">
 					<select
 						value={language}
 						onChange={(e) => setLanguage(e.target.value)}
-						className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+						className="bg-[var(--bg-secondary)] border border-[var(--border-default)] text-[var(--text-primary)] text-sm rounded-lg focus:border-[var(--border-focus)] block p-2 outline-none"
 					>
 						<option value="python">Python</option>
 						<option value="cpp">C++</option>
 						<option value="golang">Go</option>
 					</select>
 					<div className="flex gap-2">
-						<button
+						<Button
 							onClick={handleRun}
 							disabled={loading}
-							className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${
-								loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-							}`}
+							variant="primary"
+							size="small"
 						>
 							{loading ? "Running..." : "Run Code"}
-						</button>
-						<button
+						</Button>
+						<Button
 							onClick={handleRunTests}
 							disabled={testsLoading}
-							className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${
-								testsLoading ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"
-							}`}
+							variant="secondary"
+							size="small"
 						>
 							{testsLoading ? "Running Tests..." : "Run Tests"}
-						</button>
-						<button
+						</Button>
+						<Button
 							onClick={handleAiReview}
 							disabled={reviewLoading}
-							className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${
-								reviewLoading ? "bg-gray-400" : "bg-emerald-600 hover:bg-emerald-700"
-							}`}
+							variant="ghost"
+							size="small"
 						>
 							{reviewLoading ? "Reviewing..." : "AI Review"}
-						</button>
+						</Button>
 					</div>
 				</div>
 
 				{/* Monaco Editor */}
-				<div className="flex-grow border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+				<div className="flex-grow border border-[var(--border-default)] rounded-lg overflow-hidden shadow-sm">
 					<Editor
 						height="100%"
 						language={language === "golang" ? "go" : language}
 						theme="vs-dark"
 						value={code}
 						onChange={(value) => setCode(value)}
-						options={{ fontSize: 14, minimap: { enabled: false } }}
+						options={{
+							fontSize: 14,
+							minimap: { enabled: false },
+							fontFamily: "var(--font-family-mono)",
+						}}
 					/>
 				</div>
 
 				{/* Input & Output Section */}
-				<div className="h-64 flex flex-col gap-2">
-					<div className="flex h-full gap-2">
+				<div className="h-64 flex flex-col gap-4">
+					<div className="flex h-full gap-4">
 						<textarea
 							placeholder="Input (stdin)..."
 							value={inputData}
 							onChange={(e) => setInputData(e.target.value)}
-							className="w-1/3 p-3 text-sm font-mono border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+							className="w-1/3 p-3 text-sm font-mono border border-[var(--border-default)] rounded-lg focus:border-[var(--border-focus)] outline-none resize-none bg-[var(--bg-primary)] text-[var(--text-primary)]"
 						/>
-						<div className="w-2/3 bg-gray-900 rounded-lg p-3 overflow-y-auto font-mono text-sm shadow-inner">
+						<div className="w-2/3 bg-[#1e1e1e] rounded-lg p-3 overflow-y-auto font-mono text-sm shadow-inner text-gray-100">
 							<div className="text-gray-500 text-xs mb-1 uppercase tracking-wider">Output</div>
 							<pre className="text-green-400 whitespace-pre-wrap">{output.stdout}</pre>
 							{output.stderr && (
@@ -191,31 +194,30 @@ const ProblemSolve = () => {
 					</div>
 					{/* Test Results Section */}
 					{(testResults || testsError) && (
-						<div className="mt-2 bg-white border border-gray-200 rounded-lg p-3 shadow-sm max-h-64 overflow-y-auto">
+						<div className="mt-2 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-lg p-4 shadow-sm max-h-64 overflow-y-auto">
 							<div className="flex items-center justify-between mb-2">
-								<div className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+								<div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
 									Test Cases
 								</div>
 								{testResults && (
 									<div
-										className={`px-2 py-1 rounded-full text-xs font-semibold ${
-											testResults.all_passed
-												? "bg-emerald-100 text-emerald-700"
-												: "bg-red-100 text-red-700"
-										}`}
+										className={`px-2 py-1 rounded-full text-xs font-semibold ${testResults.all_passed
+												? "bg-[var(--color-success-light)] text-[var(--color-success)]"
+												: "bg-[var(--color-error-light)] text-[var(--color-error)]"
+											}`}
 									>
 										{testResults.passed_tests}/{testResults.total_tests} Passed
 									</div>
 								)}
 							</div>
 							{testsError ? (
-								<div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs">
+								<div className="p-2 bg-[var(--color-error-light)] border border-[var(--color-error)] rounded text-[var(--color-error)] text-xs">
 									{testsError}
 								</div>
 							) : (
 								<table className="w-full text-xs text-left border-collapse">
 									<thead>
-										<tr className="border-b border-gray-200 text-gray-600">
+										<tr className="border-b border-[var(--border-default)] text-[var(--text-secondary)]">
 											<th className="py-1 pr-2">#</th>
 											<th className="py-1 pr-2">Input</th>
 											<th className="py-1 pr-2">Expected</th>
@@ -225,20 +227,19 @@ const ProblemSolve = () => {
 									</thead>
 									<tbody>
 										{testResults?.results?.map((t, idx) => (
-											<tr key={idx} className="border-b border-gray-100 last:border-0">
-												<td className="py-1 pr-2 text-gray-500">{idx + 1}</td>
-												<td className="py-1 pr-2 font-mono whitespace-pre-wrap text-gray-700">
+											<tr key={idx} className="border-b border-[var(--bg-tertiary)] last:border-0">
+												<td className="py-1 pr-2 text-[var(--text-tertiary)]">{idx + 1}</td>
+												<td className="py-1 pr-2 font-mono whitespace-pre-wrap text-[var(--text-primary)]">
 													{t.input_data}
 												</td>
-												<td className="py-1 pr-2 font-mono text-gray-700">{t.expected_output}</td>
-												<td className="py-1 pr-2 font-mono text-gray-700">{t.actual_output}</td>
+												<td className="py-1 pr-2 font-mono text-[var(--text-primary)]">{t.expected_output}</td>
+												<td className="py-1 pr-2 font-mono text-[var(--text-primary)]">{t.actual_output}</td>
 												<td className="py-1 pr-2 text-center">
 													<span
-														className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-															t.passed
-																? "bg-emerald-100 text-emerald-700"
-																: "bg-red-100 text-red-700"
-														}`}
+														className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${t.passed
+																? "bg-[var(--color-success-light)] text-[var(--color-success)]"
+																: "bg-[var(--color-error-light)] text-[var(--color-error)]"
+															}`}
 													>
 														{t.passed ? "Passed" : "Failed"}
 													</span>
@@ -254,19 +255,19 @@ const ProblemSolve = () => {
 
 				{/* AI Review Section */}
 				{(review || reviewError) && (
-					<div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-						<div className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">
+					<div className="bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-lg p-4 shadow-sm">
+						<div className="text-sm font-semibold text-[var(--text-secondary)] mb-2 uppercase tracking-wider">
 							AI Code Review
 							{review?.model_used && (
-								<span className="ml-2 text-xs font-normal text-gray-500">({review.model_used})</span>
+								<span className="ml-2 text-xs font-normal text-[var(--text-tertiary)]">({review.model_used})</span>
 							)}
 						</div>
 						{reviewError ? (
-							<div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+							<div className="p-3 bg-[var(--color-error-light)] border border-[var(--color-error)] rounded text-[var(--color-error)] text-sm">
 								{reviewError}
 							</div>
 						) : (
-							<div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm max-h-48 overflow-y-auto prose prose-sm prose-slate max-w-none prose-headings:font-semibold prose-headings:text-gray-800 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-code:bg-gray-200 prose-code:px-1 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-pre:bg-gray-800 prose-pre:text-gray-100">
+							<div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg text-[var(--text-primary)] text-sm max-h-48 overflow-y-auto prose max-w-none">
 								<ReactMarkdown>{review?.code_review ?? ""}</ReactMarkdown>
 							</div>
 						)}
