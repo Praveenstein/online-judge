@@ -1,8 +1,7 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import Editor from "@monaco-editor/react";
-import { useState } from "react";
-import { Button, Select, Group, Text, Box } from "@mantine/core";
-import axios from "axios";
+import { Button, Select, Group, Text, Box, ActionIcon, Tooltip } from "@mantine/core";
+import { useCodeOutput } from "../context/CodeOutputContext";
 
 export const CodeExecutionBlock = createReactBlockSpec(
     {
@@ -19,28 +18,11 @@ export const CodeExecutionBlock = createReactBlockSpec(
     },
     {
         render: (props) => {
-            const [loading, setLoading] = useState(false);
+            const { runCode, loading, toggleSidebar } = useCodeOutput();
             const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-            const handleRun = async () => {
-                setLoading(true);
-                console.log(`[CodeExecution] Running ${props.block.props.language} code...`);
-                try {
-                    const token = localStorage.getItem("token");
-                    const response = await axios.post(
-                        `${API_BASE}/execute/`,
-                        {
-                            language: props.block.props.language,
-                            code: props.block.props.code,
-                            input_data: "" // Focusing on UI and API for now
-                        },
-                        { headers: { Authorization: `Bearer ${token}` } }
-                    );
-                    console.log("[CodeExecution] Result:", response.data);
-                } catch (err) {
-                    console.error("[CodeExecution] Error:", err.response?.data?.detail ?? err.message);
-                }
-                setLoading(false);
+            const handleRun = () => {
+                runCode(API_BASE, props.block.props.language, props.block.props.code);
             };
 
             return (
@@ -52,7 +34,8 @@ export const CodeExecutionBlock = createReactBlockSpec(
                         borderRadius: "8px",
                         overflow: "hidden",
                         background: "var(--bg-primary)",
-                        boxShadow: "var(--shadow-sm)"
+                        boxShadow: "var(--shadow-sm)",
+                        margin: "12px 0"
                     }}
                 >
                     {/* Header Controls */}
@@ -85,28 +68,45 @@ export const CodeExecutionBlock = createReactBlockSpec(
                                     }
                                 }}
                             />
-                            <Text size="xs" c="dimmed" fw={500}>
-                                EXECUTABLE CODE
+                            <Text size="xs" c="dimmed" fw={600} style={{ letterSpacing: '0.05em' }}>
+                                EXECUTABLE
                             </Text>
                         </Group>
-                        <Button
-                            size="xs"
-                            variant="filled"
-                            color="blue"
-                            onClick={handleRun}
-                            loading={loading}
-                            leftSection={
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
-                            }
-                        >
-                            Run
-                        </Button>
+
+                        <Group gap="xs">
+                            <Button
+                                size="xs"
+                                variant="filled"
+                                color="blue"
+                                onClick={handleRun}
+                                loading={loading}
+                                leftSection={
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                }
+                            >
+                                Run
+                            </Button>
+                            <Tooltip label="Toggle Results Sidebar">
+                                <ActionIcon
+                                    variant="subtle"
+                                    color="gray"
+                                    onClick={toggleSidebar}
+                                    style={{ borderRadius: '4px' }}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7" />
+                                        <path d="M16 12H3" />
+                                        <path d="M10 16l-4-4 4-4" />
+                                    </svg>
+                                </ActionIcon>
+                            </Tooltip>
+                        </Group>
                     </Group>
 
                     {/* Editor Area */}
-                    <Box style={{ height: "300px", position: "relative" }}>
+                    <Box style={{ height: "300px", position: "relative", overflow: "hidden" }}>
                         <Editor
                             height="100%"
                             language={props.block.props.language === "golang" ? "go" : props.block.props.language}
