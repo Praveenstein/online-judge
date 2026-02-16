@@ -7,6 +7,7 @@ import ProblemDashboard from "./components/ProblemDashboard";
 import ProblemSolve from "./pages/ProblemSolve";
 import Diagram from "./components/Diagram";
 import Notes from "./pages/notes";
+import DSAChat from "./pages/DSAChat";
 import Layout from "./components/ui/Layout";
 
 function App() {
@@ -44,6 +45,9 @@ function App() {
 
 							{/* Notes Page */}
 							<Route path="/notes" element={<Notes />} />
+
+							{/* DSA Search Page */}
+							<Route path="/dsa-search" element={<DSAChat />} />
 						</Route>
 
 						{/* Redirect any unknown routes to home */}
