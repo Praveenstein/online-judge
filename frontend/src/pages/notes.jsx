@@ -4,6 +4,7 @@ import "@blocknote/mantine/style.css";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
 import { ExcalidrawBlock } from "../blocks/ExcalidrawBlock";
+import { CodeExecutionBlock } from "../blocks/CodeExecutionBlock";
 import { SuggestionMenuController, getDefaultReactSlashMenuItems } from "@blocknote/react";
 
 export default function Notes() {
@@ -12,6 +13,7 @@ export default function Notes() {
 		blockSpecs: {
 			...defaultBlockSpecs,
 			excalidraw: ExcalidrawBlock(),
+			codeExecution: CodeExecutionBlock(),
 		},
 	});
 
@@ -22,7 +24,25 @@ export default function Notes() {
 
 	// Custom slash menu item
 	const getCustomSlashMenuItems = (editor) => [
-		...getDefaultReactSlashMenuItems(editor),
+		...getDefaultReactSlashMenuItems(editor).filter(item => item.title !== "Code Block"),
+		{
+			title: "Code (Executable)",
+			onItemClick: () => {
+				editor.insertBlocks(
+					[
+						{
+							type: "codeExecution",
+						},
+					],
+					editor.getTextCursorPosition().block,
+					"after"
+				);
+			},
+			aliases: ["code", "programming", "js", "python", "cpp"],
+			group: "Programming",
+			icon: <span>💻</span>,
+			subtext: "Insert an executable code block",
+		},
 		{
 			title: "Excalidraw",
 			onItemClick: () => {
