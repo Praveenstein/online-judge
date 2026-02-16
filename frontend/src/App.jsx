@@ -4,6 +4,7 @@ import Auth from "./components/Auth";
 import ProblemDashboard from "./components/ProblemDashboard";
 import ProblemSolve from "./pages/ProblemSolve";
 import Diagram from "./components/Diagram";
+import Notes from "./pages/notes";
 
 function App() {
 	const [token, setToken] = useState(localStorage.getItem("token"));
@@ -35,6 +36,9 @@ function App() {
 
 					{/* Diagram Page */}
 					<Route path="/diagram" element={<Diagram />} />
+
+					{/* Notes Page */}
+					<Route path="/notes" element={<Notes />} />
 
 					{/* Redirect any unknown routes to home */}
 					<Route path="*" element={<Navigate to="/" />} />
