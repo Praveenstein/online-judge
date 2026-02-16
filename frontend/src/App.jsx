@@ -3,6 +3,7 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-d
 import Auth from "./components/Auth";
 import ProblemDashboard from "./components/ProblemDashboard";
 import ProblemSolve from "./pages/ProblemSolve";
+import Diagram from "./components/Diagram";
 
 function App() {
 	const [token, setToken] = useState(localStorage.getItem("token"));
@@ -31,6 +32,9 @@ function App() {
 
 					{/* New Solve Page */}
 					<Route path="/solve/:id" element={<ProblemSolve />} />
+
+					{/* Diagram Page */}
+					<Route path="/diagram" element={<Diagram />} />
 
 					{/* Redirect any unknown routes to home */}
 					<Route path="*" element={<Navigate to="/" />} />
