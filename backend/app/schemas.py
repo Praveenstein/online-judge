@@ -245,3 +245,51 @@ class AICodeReviewResponse(BaseModel):
         default=None,
         description="Identifier of the model used for the review, if available.",
     )
+# ---------------------------------------------------------------------------
+# DSA Search schemas
+# ---------------------------------------------------------------------------
+
+
+class DSASearchRequest(BaseModel):
+    """Request body for querying top DSA questions via AI search.
+
+    Attributes:
+        query: The user's search query (e.g. 'Graph Traversal', 'Dynamic Programming').
+    """
+
+    query: str = Field(
+        ...,
+        min_length=1,
+        description="The DSA topic or specific question query to search for.",
+        examples=["Graph Traversal problems"],
+    )
+
+
+class DSAProblem(BaseModel):
+    """Schema for a single DSA problem result from AI search.
+
+    Attributes:
+        title: The name of the practice problem.
+        url: Link to the problem on a platform (LeetCode, GFG, etc.).
+        difficulty: Categorized difficulty level ('Easy', 'Medium', 'Hard').
+    """
+
+    title: str = Field(..., description="The title of the DSA problem.")
+    url: str = Field(..., description="A valid URL to the problem statement.")
+    difficulty: str = Field(
+        ..., description="The difficulty level as returned by the AI."
+    )
+
+
+class DSASearchResponse(BaseModel):
+    """Validated structured response for DSA search queries.
+
+    Attributes:
+        topic: The detected or user-provided topic of search.
+        problems: A list of relevant practice problems.
+    """
+
+    topic: str = Field(..., description="The DSA topic related to the search.")
+    problems: List[DSAProblem] = Field(
+        ..., description="Recommended practice problems from across the web."
+    )

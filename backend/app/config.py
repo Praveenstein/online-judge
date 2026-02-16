@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # Optional: Cerebras API key and model for AI code review (set in .env).
     CEREBRAS_API_KEY: str = ""
     CEREBRAS_MODEL: str = "gpt-oss-120b"
+    TAVILY_API_KEY: str = ""
 
     @property
     def DATABASE_URL(self) -> str:
