@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { MantineProvider } from "@mantine/core";
+import "@mantine/core/styles.css";
 import Auth from "./components/Auth";
 import ProblemDashboard from "./components/ProblemDashboard";
 import ProblemSolve from "./pages/ProblemSolve";
@@ -25,26 +27,28 @@ function App() {
 	};
 
 	return (
-		<Router>
-			<div className="min-h-screen bg-white">
-				<Routes>
-					{/* Main Dashboard / List */}
-					<Route path="/" element={<ProblemDashboard onLogout={logout} />} />
+		<MantineProvider>
+			<Router>
+				<div className="min-h-screen bg-white">
+					<Routes>
+						{/* Main Dashboard / List */}
+						<Route path="/" element={<ProblemDashboard onLogout={logout} />} />
 
-					{/* New Solve Page */}
-					<Route path="/solve/:id" element={<ProblemSolve />} />
+						{/* New Solve Page */}
+						<Route path="/solve/:id" element={<ProblemSolve />} />
 
-					{/* Diagram Page */}
-					<Route path="/diagram" element={<Diagram />} />
+						{/* Diagram Page */}
+						<Route path="/diagram" element={<Diagram />} />
 
-					{/* Notes Page */}
-					<Route path="/notes" element={<Notes />} />
+						{/* Notes Page */}
+						<Route path="/notes" element={<Notes />} />
 
-					{/* Redirect any unknown routes to home */}
-					<Route path="*" element={<Navigate to="/" />} />
-				</Routes>
-			</div>
-		</Router>
+						{/* Redirect any unknown routes to home */}
+						<Route path="*" element={<Navigate to="/" />} />
+					</Routes>
+				</div>
+			</Router>
+		</MantineProvider>
 	);
 }
 
