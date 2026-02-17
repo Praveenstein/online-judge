@@ -20,6 +20,7 @@ from app.routes import (
     execute_routes,
     ai_review_routes,
     dsa_search_routes,
+    notes,
 )
 
 
@@ -64,6 +65,7 @@ app.include_router(problem_routes.router)
 app.include_router(execute_routes.router)
 app.include_router(ai_review_routes.router)
 app.include_router(dsa_search_routes.router)
+app.include_router(notes.router, prefix="/api")
 
 
 @app.get("/")

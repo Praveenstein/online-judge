@@ -13,4 +13,5 @@ dependencies = [
     "python-jose>=3.5.0",
     "sqlalchemy>=2.0.46",
     "uvicorn>=0.40.0",
+    "alembic>=1.13.0",
 ]

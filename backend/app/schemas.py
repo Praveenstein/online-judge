@@ -293,3 +293,40 @@ class DSASearchResponse(BaseModel):
     problems: List[DSAProblem] = Field(
         ..., description="Recommended practice problems from across the web."
     )
+
+
+# ---------------------------------------------------------------------------
+# Note schemas
+# ---------------------------------------------------------------------------
+from datetime import datetime
+
+
+class NoteBase(BaseModel):
+    """Base schema for a Note."""
+
+    title: str = Field(..., min_length=1, max_length=255)
+    content: List[dict] = Field(..., description="The BlockNote state stored as a list of blocks.")
+
+
+class NoteCreate(NoteBase):
+    """Schema for creating a new note."""
+
+    pass
+
+
+class NoteUpdate(BaseModel):
+    """Schema for updating an existing note."""
+
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    content: Optional[List[dict]] = Field(None)
+
+
+class NoteOut(NoteBase):
+    """Schema for returning note data."""
+
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

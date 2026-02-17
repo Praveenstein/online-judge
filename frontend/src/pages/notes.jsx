@@ -7,7 +7,13 @@ import { ExcalidrawBlock } from "../blocks/ExcalidrawBlock";
 import { CodeExecutionBlock } from "../blocks/CodeExecutionBlock";
 import { SuggestionMenuController, getDefaultReactSlashMenuItems } from "@blocknote/react";
 import { CodeOutputProvider, useCodeOutput } from "../context/CodeOutputContext";
-import { Stack, Text, Box, Loader, ActionIcon, Tooltip } from "@mantine/core";
+import {
+	Stack, Text, Box, Loader, ActionIcon, Tooltip,
+	Divider, NavLink, ScrollArea, Button, Group,
+	Title, Paper, Container
+} from "@mantine/core";
+import { useEffect, useState, useCallback, useRef } from "react";
+import axios from "axios";
 
 const OutputSidebar = () => {
 	const { output, loading, isOpen, toggleSidebar } = useCodeOutput();
@@ -99,6 +105,14 @@ const OutputSidebar = () => {
 };
 
 export default function Notes() {
+	const [notes, setNotes] = useState([]);
+	const [activeNote, setActiveNote] = useState(null);
+	const [loading, setLoading] = useState(true);
+	const [saving, setSaving] = useState(false);
+	const saveTimeoutRef = useRef(null);
+
+	const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 	// Create a custom schema with the Excalidraw block
 	const schema = BlockNoteSchema.create({
 		blockSpecs: {
@@ -113,6 +127,92 @@ export default function Notes() {
 		schema,
 	});
 
+	// Fetch notes list
+	const fetchNotes = async () => {
+		try {
+			setLoading(true);
+			const token = localStorage.getItem("token");
+			const response = await axios.get(`${API_BASE}/api/notes`, {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+			setNotes(response.data);
+			if (response.data.length > 0 && !activeNote) {
+				// Don't auto-set active note to avoid overriding content if user is mid-creation
+			}
+		} catch (error) {
+			console.error("Failed to fetch notes:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchNotes();
+	}, []);
+
+	// Handle note selection
+	const handleSelectNote = async (note) => {
+		if (activeNote?.id === note.id) return;
+		setActiveNote(note);
+		if (note.content) {
+			editor.replaceBlocks(editor.document, note.content);
+		} else {
+			editor.replaceBlocks(editor.document, [{ type: "paragraph" }]);
+		}
+	};
+
+	// Create new note
+	const handleCreateNote = async () => {
+		try {
+			const token = localStorage.getItem("token");
+			const response = await axios.post(`${API_BASE}/api/notes`, {
+				title: "Untitled Note",
+				content: [{ type: "paragraph" }]
+			}, {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+			setNotes([response.data, ...notes]);
+			setActiveNote(response.data);
+			editor.replaceBlocks(editor.document, response.data.content);
+		} catch (error) {
+			console.error("Failed to create note:", error);
+		}
+	};
+
+	// Save note content
+	const saveNote = async (content) => {
+		if (!activeNote) return;
+		try {
+			setSaving(true);
+			const token = localStorage.getItem("token");
+			const response = await axios.put(`${API_BASE}/api/notes/${activeNote.id}`, {
+				content: content
+			}, {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+			// Sync the updated note back to the notes list
+			setNotes(prev => prev.map(n => n.id === activeNote.id ? response.data : n));
+		} catch (error) {
+			console.error("Failed to save note:", error);
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	// Auto-save logic
+	const handleEditorChange = () => {
+		if (!activeNote) return;
+		if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+		saveTimeoutRef.current = setTimeout(() => {
+			saveNote(editor.document);
+		}, 1000);
+	};
+
+	const handleBack = () => {
+		setActiveNote(null);
+		fetchNotes(); // Refresh list to ensure latest order and titles
+	};
+
 	// Custom slash menu item
 	const getCustomSlashMenuItems = (editor) => [
 		...getDefaultReactSlashMenuItems(editor).filter(item => item.title !== "Code Block"),
@@ -120,63 +220,185 @@ export default function Notes() {
 			title: "Code (Executable)",
 			onItemClick: () => {
 				editor.insertBlocks(
-					[
-						{
-							type: "codeExecution",
-						},
-					],
+					[{ type: "codeExecution" }],
 					editor.getTextCursorPosition().block,
 					"after"
 				);
 			},
 			aliases: ["code", "programming", "js", "python", "cpp"],
 			group: "Programming",
-			icon: <span>💻</span>,
+			icon: <ActionIcon variant="subtle" size="sm">💻</ActionIcon>,
 			subtext: "Insert an executable code block",
 		},
 		{
 			title: "Excalidraw",
 			onItemClick: () => {
 				editor.insertBlocks(
-					[
-						{
-							type: "excalidraw",
-						},
-					],
+					[{ type: "excalidraw" }],
 					editor.getTextCursorPosition().block,
 					"after"
 				);
 			},
 			aliases: ["sketch", "drawing", "diagram"],
 			group: "Media",
-			icon: <span>🎨</span>,
+			icon: <ActionIcon variant="subtle" size="sm">🎨</ActionIcon>,
 			subtext: "Insert an Excalidraw diagram",
 		},
 	];
 
-
 	return (
 		<CodeOutputProvider>
-			<div className="flex flex-col min-h-full">
-				<div className="mb-8">
-					<h1 className="text-4xl font-bold text-[var(--text-primary)] tracking-tight">My Notes</h1>
-				</div>
-				<div className="flex-1 -mx-4">
-					<BlockNoteView editor={editor} theme="light" slashMenu={false}>
-						<SuggestionMenuController
-							triggerCharacter={"/"}
-							getItems={async (query) =>
-								// Simple filter for the slash menu items
-								getCustomSlashMenuItems(editor).filter((item) =>
-									item.title.toLowerCase().includes(query.toLowerCase()) ||
-									(item.aliases && item.aliases.some(alias => alias.toLowerCase().includes(query.toLowerCase())))
-								)
-							}
-						/>
-					</BlockNoteView>
-				</div>
+			<div className="flex min-h-full -mx-4 bg-[var(--bg-secondary)]">
+				<main className="flex-1 flex flex-col">
+					{!activeNote ? (
+						/* List View */
+						<Container fluid className="py-8 w-full px-8">
+							<Stack gap="xl">
+								<Group justify="flex-end">
+									<Button
+										leftSection={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>}
+										onClick={handleCreateNote}
+										variant="filled"
+										color="blue"
+										size="md"
+										radius="md"
+									>
+										New Note
+									</Button>
+								</Group>
+
+								<Divider />
+
+								{loading ? (
+									<Stack align="center" py="xl">
+										<Loader size="lg" variant="dots" />
+										<Text size="sm" c="dimmed">Loading your notes...</Text>
+									</Stack>
+								) : notes.length === 0 ? (
+									<Paper p="xl" radius="lg" withBorder className="bg-white text-center py-20 opacity-60">
+										<Box mb="md">
+											<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-tertiary)]"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+										</Box>
+										<Title order={3}>No notes found</Title>
+										<Text size="sm" c="dimmed" mx="auto" maw={400} mt="xs">
+											You haven't created any notes yet. Start capturing your ideas today!
+										</Text>
+										<Button variant="light" mt="xl" onClick={handleCreateNote}>Create your first note</Button>
+									</Paper>
+								) : (
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+										{notes.map(note => (
+											<Paper
+												key={note.id}
+												p="xl"
+												radius="lg"
+												withBorder
+												className="bg-white transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer group"
+												onClick={() => handleSelectNote(note)}
+											>
+												<Stack justify="space-between" h="100%">
+													<div>
+														<Group justify="space-between" wrap="nowrap" mb="xs">
+															<Title order={4} className="truncate group-hover:text-blue-600 transition-colors" flex={1}>{note.title || "Untitled"}</Title>
+															<ActionIcon
+																variant="subtle"
+																color="red"
+																size="sm"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	if (window.confirm("Are you sure you want to delete this note?")) {
+																		const token = localStorage.getItem("token");
+																		axios.delete(`${API_BASE}/api/notes/${note.id}`, {
+																			headers: { Authorization: `Bearer ${token}` }
+																		}).then(() => fetchNotes());
+																	}
+																}}
+															>
+																<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+															</ActionIcon>
+														</Group>
+														<Text size="xs" c="dimmed">
+															Updated {new Date(note.updated_at).toLocaleDateString(undefined, {
+																month: 'short',
+																day: 'numeric',
+																year: 'numeric',
+																hour: '2-digit',
+																minute: '2-digit'
+															})}
+														</Text>
+													</div>
+													<div className="mt-8 flex justify-end">
+														<Text size="xs" fw={700} className="uppercase tracking-widest text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">Open Note</Text>
+													</div>
+												</Stack>
+											</Paper>
+										))}
+									</div>
+								)}
+							</Stack>
+						</Container>
+					) : (
+						/* Editor View */
+						<div className="flex flex-col h-full bg-white">
+							<div className="px-8 py-4 border-b border-[var(--border-default)] flex items-center justify-between sticky top-0 bg-white z-10">
+								<Group gap="lg">
+									<ActionIcon
+										variant="subtle"
+										color="gray"
+										size="lg"
+										onClick={handleBack}
+										radius="md"
+									>
+										<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+									</ActionIcon>
+									<Divider orientation="vertical" />
+									<input
+										value={activeNote.title}
+										onChange={(e) => {
+											const newTitle = e.target.value;
+											setActiveNote({ ...activeNote, title: newTitle });
+											if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+											saveTimeoutRef.current = setTimeout(async () => {
+												const token = localStorage.getItem("token");
+												await axios.put(`${API_BASE}/api/notes/${activeNote.id}`, { title: newTitle }, {
+													headers: { Authorization: `Bearer ${token}` }
+												});
+												setNotes(notes.map(n => n.id === activeNote.id ? { ...n, title: newTitle } : n));
+											}, 1000);
+										}}
+										className="text-2xl font-bold bg-transparent border-none outline-none text-[var(--text-primary)] w-[400px]"
+										placeholder="Untitled Note"
+									/>
+								</Group>
+								<Group>
+									{saving && <Loader size="xs" variant="dots" />}
+								</Group>
+							</div>
+							<div className="flex-1 overflow-y-auto px-12 py-10 w-full">
+								<div className="max-w-7xl mx-auto">
+									<BlockNoteView
+										editor={editor}
+										theme="light"
+										slashMenu={false}
+										onChange={handleEditorChange}
+									>
+										<SuggestionMenuController
+											triggerCharacter={"/"}
+											getItems={async (query) =>
+												getCustomSlashMenuItems(editor).filter((item) =>
+													item.title.toLowerCase().includes(query.toLowerCase()) ||
+													(item.aliases && item.aliases.some(alias => alias.toLowerCase().includes(query.toLowerCase())))
+												)
+											}
+										/>
+									</BlockNoteView>
+								</div>
+							</div>
+						</div>
+					)}
+				</main>
+				{activeNote && <OutputSidebar />}
 			</div>
-			<OutputSidebar />
 		</CodeOutputProvider>
 	);
 }

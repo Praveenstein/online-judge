@@ -5,8 +5,10 @@ which represents the 'users' table in the database.
 """
 
 # External Imports.
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Text, DateTime
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 # Local Imports.
 from .database import Base
@@ -29,6 +31,9 @@ class User(Base):
 
     # Relationship to problems
     problems: Mapped[list["Problem"]] = relationship(back_populates="creator")
+    
+    # Relationship to notes
+    notes: Mapped[list["Note"]] = relationship(back_populates="user")
 
 
 class Problem(Base):
@@ -53,3 +58,22 @@ class Problem(Base):
 
     # Relationship to the User model
     creator: Mapped["User"] = relationship(back_populates="problems")
+
+class Note(Base):
+    """Represents a persisted note with BlockNote content."""
+
+    __tablename__ = "notes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(index=True)
+    
+    # BlockNote state is stored as JSONB for better performance and indexing
+    content: Mapped[list] = mapped_column(JSONB, nullable=False)
+    
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationship to the User model
+    user: Mapped["User"] = relationship(back_populates="notes")
