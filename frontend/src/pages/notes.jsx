@@ -12,6 +12,7 @@ import {
 	Divider, NavLink, ScrollArea, Button, Group,
 	Title, Paper, Container
 } from "@mantine/core";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 
@@ -109,9 +110,9 @@ export default function Notes() {
 	const [activeNote, setActiveNote] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
-	const saveTimeoutRef = useRef(null);
-
 	const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+	const navigate = useNavigate();
+	const location = useLocation();
 
 	// Create a custom schema with the Excalidraw block
 	const schema = BlockNoteSchema.create({
@@ -136,8 +137,19 @@ export default function Notes() {
 				headers: { Authorization: `Bearer ${token}` }
 			});
 			setNotes(response.data);
-			if (response.data.length > 0 && !activeNote) {
-				// Don't auto-set active note to avoid overriding content if user is mid-creation
+
+			// Check if we should auto-open a note from navigation state
+			const selectedId = location.state?.selectedNoteId;
+			if (selectedId) {
+				const noteToOpen = response.data.find(n => n.id === selectedId);
+				if (noteToOpen) {
+					setActiveNote(noteToOpen);
+					if (noteToOpen.content) {
+						editor.replaceBlocks(editor.document, noteToOpen.content);
+					}
+					// Clear navigation state so back button works correctly
+					navigate(location.pathname, { replace: true, state: {} });
+				}
 			}
 		} catch (error) {
 			console.error("Failed to fetch notes:", error);

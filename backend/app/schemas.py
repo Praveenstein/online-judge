@@ -330,3 +330,10 @@ class NoteOut(NoteBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class NoteFromProblem(BaseModel):
+    """Schema for creating a note from a DSA problem search result."""
+
+    title: str = Field(..., description="The title of the problem.")
+    url: str = Field(..., description="The URL of the problem statement.")
+    difficulty: Optional[str] = Field(None, description="The difficulty of the problem.")

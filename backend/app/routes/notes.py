@@ -5,8 +5,9 @@ from typing import List
 
 from ..database import get_db
 from ..models import Note, User
-from ..schemas import NoteCreate, NoteUpdate, NoteOut
+from ..schemas import NoteCreate, NoteUpdate, NoteOut, NoteFromProblem
 from ..auth.utils import get_current_user
+from ..services.problem_ingestion import fetch_problem_details
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -90,3 +91,24 @@ async def delete_note(
     await db.delete(note)
     await db.commit()
     return None
+
+
+@router.post("/from-problem", response_model=NoteOut, status_code=status.HTTP_201_CREATED)
+async def create_note_from_problem(
+    note_in: NoteFromProblem,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new note from a DSA problem URL."""
+    # Fetch problem details and format as blocks
+    blocks = await fetch_problem_details(note_in.url, note_in.title)
+    
+    new_note = Note(
+        title=note_in.title,
+        content=blocks,
+        user_id=current_user.id
+    )
+    db.add(new_note)
+    await db.commit()
+    await db.refresh(new_note)
+    return new_note
