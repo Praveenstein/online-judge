@@ -8,6 +8,7 @@ import ProblemSolve from "./pages/ProblemSolve";
 import Diagram from "./components/Diagram";
 import Notes from "./pages/notes";
 import DSAChat from "./pages/DSAChat";
+import FlashCards from "./pages/FlashCards";
 import Layout from "./components/ui/Layout";
 
 function App() {
@@ -48,6 +49,9 @@ function App() {
 
 							{/* DSA Search Page */}
 							<Route path="/dsa-search" element={<DSAChat />} />
+
+							{/* Flash Cards Page */}
+							<Route path="/flash-cards" element={<FlashCards />} />
 						</Route>
 
 						{/* Redirect any unknown routes to home */}

@@ -86,6 +86,17 @@ const Layout = ({ onLogout }) => {
                         >
                             DSA Search
                         </NavLink>
+                        <NavLink
+                            to="/flash-cards"
+                            className={({ isActive }) =>
+                                `block px-4 py-2 text-sm font-medium rounded-md transition-colors ${isActive
+                                    ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
+                                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]'
+                                }`
+                            }
+                        >
+                            Flash Cards
+                        </NavLink>
                     </nav>
                 </div>
 

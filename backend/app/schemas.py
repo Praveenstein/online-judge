@@ -363,3 +363,52 @@ class AITestExecutionResponse(BaseModel):
 
     results: List[AITestResult] = Field(..., description="List of test results.")
     summary: str = Field(..., description="A short summary of the results (e.g. '3/5 Passed').")
+
+
+# ---------------------------------------------------------------------------
+# Problem Attempt schemas
+# ---------------------------------------------------------------------------
+
+class ProblemAttemptBase(BaseModel):
+    """Base schema for a Problem Attempt."""
+    problem_title: str
+    problem_url: Optional[str] = None
+    difficulty: Optional[str] = None
+    code: str
+    language: str
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
+    exit_code: int
+    test_results: Optional[List[dict] | dict] = None
+    passed: bool
+
+
+class ProblemAttemptCreate(ProblemAttemptBase):
+    """Schema for creating a new problem attempt."""
+    pass
+
+
+class ProblemAttemptOut(ProblemAttemptBase):
+    """Schema for returning problem attempt data."""
+    id: int
+    user_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# Flash Card schemas
+# ---------------------------------------------------------------------------
+
+class FlashCard(BaseModel):
+    """Schema for a single practice flash card."""
+    front: str = Field(..., description="The question or problem statement part of the card.")
+    back: str = Field(..., description="The key insight, logic pattern, or solution snippet.")
+    problem_context: Optional[str] = Field(None, description="Title of the problem this card relates to.")
+
+
+class FlashCardResponse(BaseModel):
+    """Response containing a set of flash cards."""
+    cards: List[FlashCard]
+    summary: str

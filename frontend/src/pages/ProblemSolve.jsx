@@ -19,6 +19,8 @@ const ProblemSolve = () => {
 	const [testResults, setTestResults] = useState(null);
 	const [testsLoading, setTestsLoading] = useState(false);
 	const [testsError, setTestsError] = useState(null);
+	const [saved, setSaved] = useState(false);
+	const [saveLoading, setSaveLoading] = useState(false);
 
 	const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -93,6 +95,34 @@ const ProblemSolve = () => {
 		setReviewLoading(false);
 	};
 
+	const handleSaveAttempt = async () => {
+		setSaveLoading(true);
+		try {
+			const token = localStorage.getItem("token");
+			const attemptData = {
+				problem_title: problem.title,
+				problem_url: window.location.href, // Or problem.url if available
+				code: code,
+				language: language,
+				stdout: output.stdout,
+				stderr: output.stderr,
+				exit_code: output.exit_code,
+				test_results: testResults?.results || null,
+				passed: testResults ? testResults.all_passed : output.exit_code === 0
+			};
+			await axios.post(
+				`${API_BASE}/api/attempts/`,
+				attemptData,
+				{ headers: { Authorization: `Bearer ${token}` } }
+			);
+			setSaved(true);
+			setTimeout(() => setSaved(false), 3000);
+		} catch (err) {
+			console.error("Failed to save attempt", err);
+		}
+		setSaveLoading(false);
+	};
+
 	if (!problem) return <div className="p-10 text-center text-[var(--text-tertiary)]">Loading problem...</div>;
 
 	return (
@@ -103,10 +133,10 @@ const ProblemSolve = () => {
 				<div className="flex items-center gap-3 mb-4">
 					<span
 						className={`px-2 py-1 rounded text-xs font-semibold uppercase tracking-wider ${problem.difficulty === "Easy"
-								? "bg-[var(--color-success-light)] text-[var(--color-success)]"
-								: problem.difficulty === "Medium"
-									? "bg-[var(--color-warning-light)] text-[var(--color-warning)]"
-									: "bg-[var(--color-error-light)] text-[var(--color-error)]"
+							? "bg-[var(--color-success-light)] text-[var(--color-success)]"
+							: problem.difficulty === "Medium"
+								? "bg-[var(--color-warning-light)] text-[var(--color-warning)]"
+								: "bg-[var(--color-error-light)] text-[var(--color-error)]"
 							}`}
 					>
 						{problem.difficulty}
@@ -156,6 +186,17 @@ const ProblemSolve = () => {
 						>
 							{reviewLoading ? "Reviewing..." : "AI Review"}
 						</Button>
+						{(output.exit_code !== null || testResults) && (
+							<Button
+								onClick={handleSaveAttempt}
+								disabled={saveLoading || saved}
+								variant="primary"
+								size="small"
+								style={{ backgroundColor: saved ? 'var(--color-success)' : '' }}
+							>
+								{saveLoading ? "Saving..." : saved ? "Attempt Saved!" : "Save Attempt"}
+							</Button>
+						)}
 					</div>
 				</div>
 
@@ -202,8 +243,8 @@ const ProblemSolve = () => {
 								{testResults && (
 									<div
 										className={`px-2 py-1 rounded-full text-xs font-semibold ${testResults.all_passed
-												? "bg-[var(--color-success-light)] text-[var(--color-success)]"
-												: "bg-[var(--color-error-light)] text-[var(--color-error)]"
+											? "bg-[var(--color-success-light)] text-[var(--color-success)]"
+											: "bg-[var(--color-error-light)] text-[var(--color-error)]"
 											}`}
 									>
 										{testResults.passed_tests}/{testResults.total_tests} Passed
@@ -237,8 +278,8 @@ const ProblemSolve = () => {
 												<td className="py-1 pr-2 text-center">
 													<span
 														className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${t.passed
-																? "bg-[var(--color-success-light)] text-[var(--color-success)]"
-																: "bg-[var(--color-error-light)] text-[var(--color-error)]"
+															? "bg-[var(--color-success-light)] text-[var(--color-success)]"
+															: "bg-[var(--color-error-light)] text-[var(--color-error)]"
 															}`}
 													>
 														{t.passed ? "Passed" : "Failed"}

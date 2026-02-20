@@ -17,7 +17,35 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 
 const OutputSidebar = () => {
-	const { output, loading, isOpen, toggleSidebar } = useCodeOutput();
+	const { output, loading, isOpen, metadata, toggleSidebar, saveAttempt } = useCodeOutput();
+	const [saved, setSaved] = useState(false);
+	const [saveLoading, setSaveLoading] = useState(false);
+	const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+	const handleSave = async () => {
+		if (!output) return;
+		setSaveLoading(true);
+		try {
+			const attemptData = {
+				problem_title: metadata?.title || "Untitled",
+				problem_url: metadata?.url || "",
+				code: output.code || "", // We might need to store the code in output too
+				language: output.language || "python",
+				stdout: output.stdout || "",
+				stderr: output.stderr || "",
+				exit_code: output.exit_code || 0,
+				test_results: output.type === 'ai-tests' ? output.results : null,
+				passed: output.type === 'ai-tests' ? output.results.every(r => r.passed) : output.exit_code === 0
+			};
+			await saveAttempt(API_BASE, attemptData);
+			setSaved(true);
+			setTimeout(() => setSaved(false), 3000);
+		} catch (error) {
+			console.error("Save failed", error);
+		} finally {
+			setSaveLoading(false);
+		}
+	};
 
 	const renderAiTests = () => {
 		if (!output || output.type !== 'ai-tests') return null;
@@ -150,6 +178,27 @@ const OutputSidebar = () => {
 						</Stack>
 					)}
 				</div>
+
+				{output && !loading && (
+					<div className="mt-4 pt-4 border-t border-[var(--border-default)]">
+						<Button
+							fullWidth
+							variant="filled"
+							color={saved ? "green" : "blue"}
+							onClick={handleSave}
+							loading={saveLoading}
+							disabled={saved}
+							size="md"
+							radius="md"
+							leftSection={saved ?
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> :
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+							}
+						>
+							{saved ? "Attempt Saved Successfully" : "Save This Attempt"}
+						</Button>
+					</div>
+				)}
 			</div>
 		</aside>
 	);

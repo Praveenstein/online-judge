@@ -21,11 +21,32 @@ export const CodeExecutionBlock = createReactBlockSpec(
             const { runCode, runAiTests, loading, toggleSidebar } = useCodeOutput();
             const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+            const getMetadata = () => {
+                const allBlocks = props.editor.document;
+                const titleBlock = allBlocks.find(b => b.type === "heading" && b.props?.level === 1);
+                const urlBlock = allBlocks.find(b => b.type === "paragraph" && b.content?.some(c => c.text?.includes("Problem Link:")));
+
+                let title = "Untitled Problem";
+                if (titleBlock && Array.isArray(titleBlock.content)) {
+                    title = titleBlock.content.map(c => c.text).join("");
+                }
+
+                let url = "";
+                if (urlBlock && Array.isArray(urlBlock.content)) {
+                    const urlPart = urlBlock.content.find(c => !c.styles?.bold && (c.text?.startsWith("http") || c.text?.includes("leetcode") || c.text?.includes("geeksforgeeks")));
+                    if (urlPart) url = urlPart.text.trim();
+                }
+
+                return { title, url };
+            };
+
             const handleRun = () => {
-                runCode(API_BASE, props.block.props.language, props.block.props.code);
+                const meta = getMetadata();
+                runCode(API_BASE, props.block.props.language, props.block.props.code, meta);
             };
 
             const handleRunAiTests = () => {
+                const meta = getMetadata();
                 // Collect description from other blocks
                 const allBlocks = props.editor.document;
                 const descriptionParts = allBlocks
@@ -39,7 +60,7 @@ export const CodeExecutionBlock = createReactBlockSpec(
                     .filter(txt => txt.trim() !== "");
 
                 const fullDescription = descriptionParts.join("\n");
-                runAiTests(API_BASE, props.block.props.language, props.block.props.code, fullDescription);
+                runAiTests(API_BASE, props.block.props.language, props.block.props.code, fullDescription, meta);
             };
 
             return (

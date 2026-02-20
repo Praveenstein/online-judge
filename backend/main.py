@@ -21,6 +21,8 @@ from app.routes import (
     ai_review_routes,
     dsa_search_routes,
     notes,
+    attempts,
+    flash_cards,
 )
 
 
@@ -66,6 +68,8 @@ app.include_router(execute_routes.router)
 app.include_router(ai_review_routes.router)
 app.include_router(dsa_search_routes.router)
 app.include_router(notes.router, prefix="/api")
+app.include_router(attempts.router, prefix="/api")
+app.include_router(flash_cards.router, prefix="/api")
 
 
 @app.get("/")
