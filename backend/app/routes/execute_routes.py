@@ -19,8 +19,11 @@ from ..schemas import (
     TestExecutionRequest,
     TestExecutionResponse,
     TestCaseResult,
+    AITestExecutionRequest,
+    AITestExecutionResponse,
 )
 from ..services.compiler import CodeExecutor
+from ..services.ai_tester import run_ai_tests
 
 router = APIRouter(prefix="/execute", tags=["compiler"])
 
@@ -125,6 +128,22 @@ async def run_code_with_tests(
     except subprocess.TimeoutExpired:
         raise HTTPException(
             status_code=408, detail="Code execution timed out while running tests."
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ai-tests", response_model=AITestExecutionResponse)
+async def run_ai_generated_tests(
+    request: AITestExecutionRequest,
+    current_user: User = Depends(get_current_user),
+) -> AITestExecutionResponse:
+    """Run AI-generated tests against user code."""
+    try:
+        return await run_ai_tests(
+            request.problem_description,
+            request.code,
+            request.language
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

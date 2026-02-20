@@ -55,13 +55,15 @@ class CodeExecutor:
     async def _run_python(job_id: str, code: str, input_data: str) -> Dict[str, Any]:
         """Runs a Python script as a subprocess."""
         file_path: Path = TEMP_DIR / f"{job_id}.py"
-        file_path.write_text(code)
+        file_path.write_text(code, encoding="utf-8")
 
         result = subprocess.run(
             ["python", str(file_path)],
             input=input_data,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
             timeout=5,
         )
         os.remove(file_path)
@@ -80,12 +82,13 @@ class CodeExecutor:
             if os.name == "nt"
             else TEMP_DIR / f"{job_id}.out"
         )
-        source_path.write_text(code)
+        source_path.write_text(code, encoding="utf-8")
 
         compile_res = subprocess.run(
             ["g++", str(source_path), "-o", str(exec_path)],
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
 
         if compile_res.returncode != 0:
@@ -101,6 +104,7 @@ class CodeExecutor:
             input=input_data,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=5,
         )
 
@@ -119,13 +123,14 @@ class CodeExecutor:
         """Runs Go code using the 'go run' command."""
         file_path: Path = TEMP_DIR / f"{job_id}.go"
         abs_path: str = str(file_path.absolute())
-        file_path.write_text(code)
+        file_path.write_text(code, encoding="utf-8")
 
         result = subprocess.run(
             ["go", "run", abs_path],
             input=input_data,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=10,
             shell=True if os.name == "nt" else False,
         )

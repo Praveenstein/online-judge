@@ -337,3 +337,29 @@ class NoteFromProblem(BaseModel):
     title: str = Field(..., description="The title of the problem.")
     url: str = Field(..., description="The URL of the problem statement.")
     difficulty: Optional[str] = Field(None, description="The difficulty of the problem.")
+class AITestExecutionRequest(BaseModel):
+    """Request for running AI-generated tests against user code."""
+
+    code: str = Field(..., description="The user's source code.")
+    language: str = Field(..., description="Programming language (e.g. 'python').")
+    problem_description: str = Field(
+        ..., description="The problem statement to generate tests for."
+    )
+
+
+class AITestResult(BaseModel):
+    """Result of a single AI-generated test case."""
+
+    input_data: str = Field(..., description="The test input.")
+    expected_output: str = Field(..., description="Output from reference solution.")
+    actual_output: str = Field(..., description="Output from user's code.")
+    passed: bool = Field(..., description="True if outputs match.")
+    stderr: Optional[str] = Field(None, description="Error from user's code execution.")
+    exit_code: int = Field(..., description="Exit code from user's code execution.")
+
+
+class AITestExecutionResponse(BaseModel):
+    """Aggregate response for AI test execution."""
+
+    results: List[AITestResult] = Field(..., description="List of test results.")
+    summary: str = Field(..., description="A short summary of the results (e.g. '3/5 Passed').")

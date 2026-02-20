@@ -10,7 +10,7 @@ import { CodeOutputProvider, useCodeOutput } from "../context/CodeOutputContext"
 import {
 	Stack, Text, Box, Loader, ActionIcon, Tooltip,
 	Divider, NavLink, ScrollArea, Button, Group,
-	Title, Paper, Container
+	Title, Paper, Container, Badge
 } from "@mantine/core";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -19,13 +19,59 @@ import axios from "axios";
 const OutputSidebar = () => {
 	const { output, loading, isOpen, toggleSidebar } = useCodeOutput();
 
+	const renderAiTests = () => {
+		if (!output || output.type !== 'ai-tests') return null;
+
+		return (
+			<div className="space-y-6">
+				<div className="flex items-center justify-between mb-4 border-b border-[var(--border-default)] pb-4">
+					<Text size="sm" fw={700} c="blue">{output.summary}</Text>
+				</div>
+				<Stack gap="md">
+					{output.results.map((res, i) => (
+						<Paper key={i} p="xs" withBorder radius="md" style={{ borderLeft: `4px solid ${res.passed ? 'var(--mantine-color-green-6)' : 'var(--mantine-color-red-6)'}` }}>
+							<Stack gap="xs">
+								<Group justify="space-between">
+									<Text size="xs" fw={700}>Test Case #{i + 1}</Text>
+									<Badge size="xs" color={res.passed ? 'green' : 'red'}>{res.passed ? 'PASSED' : 'FAILED'}</Badge>
+								</Group>
+								<div className="space-y-1">
+									<Text size="10px" c="dimmed" fw={700} className="uppercase tracking-tighter">Input</Text>
+									<pre className="text-[10px] bg-[var(--bg-secondary)] p-2 rounded border border-[var(--border-default)]">{res.input_data}</pre>
+								</div>
+								<div className="grid grid-cols-1 gap-2">
+									<div>
+										<Text size="10px" c="dimmed" fw={700} className="uppercase tracking-tighter">Expected</Text>
+										<pre className="text-[10px] bg-green-50/10 p-2 rounded border border-green-500/20 text-green-400 font-mono">{res.expected_output}</pre>
+									</div>
+									<div>
+										<Text size="10px" c="dimmed" fw={700} className="uppercase tracking-tighter">Actual</Text>
+										<pre className={`text-[10px] p-2 rounded border font-mono ${res.passed ? 'bg-green-50/10 border-green-500/20 text-green-400' : 'bg-red-50/10 border-red-500/20 text-red-400'}`}>{res.actual_output}</pre>
+									</div>
+								</div>
+								{res.stderr && (
+									<div className="mt-2">
+										<Text size="10px" c="red" fw={700} className="uppercase tracking-tighter">Error</Text>
+										<pre className="text-[10px] text-red-400 bg-red-50/10 p-2 rounded border border-red-500/20 mt-1">{res.stderr}</pre>
+									</div>
+								)}
+							</Stack>
+						</Paper>
+					))}
+				</Stack>
+			</div>
+		);
+	};
+
 	return (
 		<aside className={`right-sidebar ${!isOpen ? 'right-sidebar-collapsed' : ''}`}>
 			<div className="flex flex-col h-full">
 				<div className="flex items-center justify-between mb-8 pb-4 border-b border-[var(--border-default)]">
 					<div>
 						<h2 className="text-lg font-bold text-[var(--text-primary)]">Execution Results</h2>
-						<p className="text-xs text-[var(--text-tertiary)] uppercase tracking-widest mt-1">Console Output</p>
+						<p className="text-xs text-[var(--text-tertiary)] uppercase tracking-widest mt-1">
+							{output?.type === 'ai-tests' ? 'Automated Tests' : 'Console Output'}
+						</p>
 					</div>
 					<ActionIcon
 						variant="subtle"
@@ -45,49 +91,53 @@ const OutputSidebar = () => {
 					{loading ? (
 						<Stack align="center" justify="center" h="100%" gap="lg">
 							<Loader color="blue" size="md" variant="dots" />
-							<Text size="sm" fw={500} c="dimmed">Executing block...</Text>
+							<Text size="sm" fw={500} c="dimmed">
+								{output?.type === 'ai-tests' ? 'Generating and running tests...' : 'Executing block...'}
+							</Text>
 						</Stack>
 					) : output ? (
-						<div className="space-y-6">
-							{output.stdout && (
-								<div className="space-y-2">
-									<div className="flex items-center gap-2">
-										<div className="w-2 h-2 rounded-full bg-green-500"></div>
-										<Text size="xs" fw={700} c="dimmed" className="uppercase tracking-wider">Standard Output</Text>
+						output.type === 'ai-tests' ? renderAiTests() : (
+							<div className="space-y-6">
+								{output.stdout && (
+									<div className="space-y-2">
+										<div className="flex items-center gap-2">
+											<div className="w-2 h-2 rounded-full bg-green-500"></div>
+											<Text size="xs" fw={700} c="dimmed" className="uppercase tracking-wider">Standard Output</Text>
+										</div>
+										<pre className="output-pre text-green-400">
+											{output.stdout}
+										</pre>
 									</div>
-									<pre className="output-pre text-green-400">
-										{output.stdout}
-									</pre>
-								</div>
-							)}
-							{output.stderr && (
-								<div className="space-y-2">
-									<div className="flex items-center gap-2">
-										<div className="w-2 h-2 rounded-full bg-red-500"></div>
-										<Text size="xs" fw={700} c="dimmed" className="uppercase tracking-wider">Standard Error</Text>
+								)}
+								{output.stderr && (
+									<div className="space-y-2">
+										<div className="flex items-center gap-2">
+											<div className="w-2 h-2 rounded-full bg-red-500"></div>
+											<Text size="xs" fw={700} c="dimmed" className="uppercase tracking-wider">Standard Error</Text>
+										</div>
+										<pre className="output-pre text-red-400 border-red-900/30">
+											{output.stderr}
+										</pre>
 									</div>
-									<pre className="output-pre text-red-400 border-red-900/30">
-										{output.stderr}
-									</pre>
-								</div>
-							)}
-							{!output.stdout && !output.stderr && (
-								<div className="flex flex-col items-center justify-center py-20 opacity-40">
-									<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mb-4">
-										<circle cx="12" cy="12" r="10"></circle>
-										<line x1="12" y1="8" x2="12" y2="12"></line>
-										<line x1="12" y1="16" x2="12.01" y2="16"></line>
-									</svg>
-									<Text size="sm" italic>No output content</Text>
-								</div>
-							)}
-							<div className="mt-12 pt-6 border-t border-[var(--border-default)] flex items-center justify-between">
-								<Text size="xs" c="dimmed" fw={500}>Exit Status</Text>
-								<div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${output.exit_code === 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-									{output.exit_code === 0 ? 'Success' : `Error (${output.exit_code})`}
+								)}
+								{!output.stdout && !output.stderr && (
+									<div className="flex flex-col items-center justify-center py-20 opacity-40">
+										<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mb-4">
+											<circle cx="12" cy="12" r="10"></circle>
+											<line x1="12" y1="8" x2="12" y2="12"></line>
+											<line x1="12" y1="16" x2="12.01" y2="16"></line>
+										</svg>
+										<Text size="sm" italic>No output content</Text>
+									</div>
+								)}
+								<div className="mt-12 pt-6 border-t border-[var(--border-default)] flex items-center justify-between">
+									<Text size="xs" c="dimmed" fw={500}>Exit Status</Text>
+									<div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${output.exit_code === 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+										{output.exit_code === 0 ? 'Success' : `Error (${output.exit_code})`}
+									</div>
 								</div>
 							</div>
-						</div>
+						)
 					) : (
 						<Stack align="center" justify="center" h="100%" p="xl" className="text-center opacity-30">
 							<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mb-6">
@@ -96,7 +146,7 @@ const OutputSidebar = () => {
 								<line x1="12" y1="17" x2="12" y2="21"></line>
 							</svg>
 							<Text size="sm" fw={500}>Ready for execution</Text>
-							<Text size="xs">Click "Run" on any code block to view results here</Text>
+							<Text size="xs">Click "Run" or "AI Tests" on any code block to view results here</Text>
 						</Stack>
 					)}
 				</div>
@@ -110,6 +160,7 @@ export default function Notes() {
 	const [activeNote, setActiveNote] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
+	const saveTimeoutRef = useRef(null);
 	const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 	const navigate = useNavigate();
 	const location = useLocation();

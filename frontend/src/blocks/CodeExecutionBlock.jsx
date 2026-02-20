@@ -18,11 +18,28 @@ export const CodeExecutionBlock = createReactBlockSpec(
     },
     {
         render: (props) => {
-            const { runCode, loading, toggleSidebar } = useCodeOutput();
+            const { runCode, runAiTests, loading, toggleSidebar } = useCodeOutput();
             const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
             const handleRun = () => {
                 runCode(API_BASE, props.block.props.language, props.block.props.code);
+            };
+
+            const handleRunAiTests = () => {
+                // Collect description from other blocks
+                const allBlocks = props.editor.document;
+                const descriptionParts = allBlocks
+                    .filter(b => b.type === "paragraph" || b.type === "heading")
+                    .map(b => {
+                        if (Array.isArray(b.content)) {
+                            return b.content.map(c => c.text).join("");
+                        }
+                        return "";
+                    })
+                    .filter(txt => txt.trim() !== "");
+
+                const fullDescription = descriptionParts.join("\n");
+                runAiTests(API_BASE, props.block.props.language, props.block.props.code, fullDescription);
             };
 
             return (
@@ -87,6 +104,24 @@ export const CodeExecutionBlock = createReactBlockSpec(
                                 }
                             >
                                 Run
+                            </Button>
+                            <Button
+                                size="xs"
+                                variant="outline"
+                                color="violet"
+                                onClick={handleRunAiTests}
+                                loading={loading}
+                                leftSection={
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 2v8" />
+                                        <path d="M16 6l-4 4-4-4" />
+                                        <rect x="2" y="14" width="20" height="8" rx="2" />
+                                        <path d="M6 18h.01" />
+                                        <path d="M10 18h.01" />
+                                    </svg>
+                                }
+                            >
+                                AI Tests
                             </Button>
                             <Tooltip label="Toggle Results Sidebar">
                                 <ActionIcon

@@ -31,10 +31,39 @@ export const CodeOutputProvider = ({ children }) => {
         setLoading(false);
     };
 
+    const runAiTests = async (API_BASE, language, code, problemDescription) => {
+        setLoading(true);
+        setIsOpen(true);
+        setOutput(null);
+        try {
+            const token = localStorage.getItem("token");
+            const axios = (await import("axios")).default;
+            const response = await axios.post(
+                `${API_BASE}/execute/ai-tests`,
+                {
+                    language,
+                    code,
+                    problem_description: problemDescription
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            // Prefixing with type so the sidebar knows how to render it
+            setOutput({ ...response.data, type: 'ai-tests' });
+        } catch (err) {
+            const errorMsg = err.response?.data?.detail ?? err.message;
+            setOutput({
+                results: [],
+                summary: `Error: ${errorMsg}`,
+                type: 'ai-tests'
+            });
+        }
+        setLoading(false);
+    };
+
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     return (
-        <CodeOutputContext.Provider value={{ output, loading, isOpen, setIsOpen, runCode, toggleSidebar }}>
+        <CodeOutputContext.Provider value={{ output, loading, isOpen, setIsOpen, runCode, runAiTests, toggleSidebar }}>
             {children}
         </CodeOutputContext.Provider>
     );
