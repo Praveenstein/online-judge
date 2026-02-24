@@ -398,37 +398,27 @@ export default function Notes() {
 										<Button variant="light" mt="xl" onClick={handleCreateNote}>Create your first note</Button>
 									</Paper>
 								) : (
-									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+									<div className="flex flex-col w-full max-w-5xl mx-auto gap-2">
 										{notes.map(note => (
-											<Paper
+											<div
 												key={note.id}
-												p="xl"
-												radius="lg"
-												withBorder
-												className="bg-white transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer group"
+												className="flex items-center justify-between p-4 rounded-xl transition-all hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 cursor-pointer group"
 												onClick={() => handleSelectNote(note)}
 											>
-												<Stack justify="space-between" h="100%">
-													<div>
-														<Group justify="space-between" wrap="nowrap" mb="xs">
-															<Title order={4} className="truncate group-hover:text-blue-600 transition-colors" flex={1}>{note.title || "Untitled"}</Title>
-															<ActionIcon
-																variant="subtle"
-																color="red"
-																size="sm"
-																onClick={(e) => {
-																	e.stopPropagation();
-																	if (window.confirm("Are you sure you want to delete this note?")) {
-																		const token = localStorage.getItem("token");
-																		axios.delete(`${API_BASE}/api/notes/${note.id}`, {
-																			headers: { Authorization: `Bearer ${token}` }
-																		}).then(() => fetchNotes());
-																	}
-																}}
-															>
-																<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-															</ActionIcon>
-														</Group>
+												<Group gap="lg" wrap="nowrap" flex={1}>
+													<div className="flex items-center justify-center w-12 h-12 rounded-lg bg-white shadow-sm border border-gray-100 text-gray-400 group-hover:text-blue-500 group-hover:border-blue-100 group-hover:bg-blue-50 transition-all flex-shrink-0">
+														<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+															<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+															<polyline points="14 2 14 8 20 8"></polyline>
+															<line x1="16" y1="13" x2="8" y2="13"></line>
+															<line x1="16" y1="17" x2="8" y2="17"></line>
+															<polyline points="10 9 9 9 8 9"></polyline>
+														</svg>
+													</div>
+													<Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+														<Text size="xl" fw={700} className="truncate group-hover:text-blue-600 transition-colors" style={{ lineHeight: 1.2 }}>
+															{note.title || "Untitled Note"}
+														</Text>
 														<Text size="xs" c="dimmed">
 															Updated {new Date(note.updated_at).toLocaleDateString(undefined, {
 																month: 'short',
@@ -438,12 +428,28 @@ export default function Notes() {
 																minute: '2-digit'
 															})}
 														</Text>
-													</div>
-													<div className="mt-8 flex justify-end">
-														<Text size="xs" fw={700} className="uppercase tracking-widest text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">Open Note</Text>
-													</div>
-												</Stack>
-											</Paper>
+													</Stack>
+												</Group>
+												<Group gap="md" className="opacity-0 group-hover:opacity-100 transition-opacity">
+													<Text size="xs" fw={700} className="uppercase tracking-widest text-blue-500">Open Note</Text>
+													<ActionIcon
+														variant="subtle"
+														color="red"
+														size="md"
+														onClick={(e) => {
+															e.stopPropagation();
+															if (window.confirm("Are you sure you want to delete this note?")) {
+																const token = localStorage.getItem("token");
+																axios.delete(`${API_BASE}/api/notes/${note.id}`, {
+																	headers: { Authorization: `Bearer ${token}` }
+																}).then(() => fetchNotes());
+															}
+														}}
+													>
+														<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+													</ActionIcon>
+												</Group>
+											</div>
 										))}
 									</div>
 								)}
@@ -478,7 +484,8 @@ export default function Notes() {
 												setNotes(notes.map(n => n.id === activeNote.id ? { ...n, title: newTitle } : n));
 											}, 1000);
 										}}
-										className="text-2xl font-bold bg-transparent border-none outline-none text-[var(--text-primary)] w-[400px]"
+										className="bg-transparent border-none outline-none text-[var(--text-primary)] w-[800px] placeholder-gray-300"
+										style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1.2, height: '60px' }}
 										placeholder="Untitled Note"
 									/>
 								</Group>
