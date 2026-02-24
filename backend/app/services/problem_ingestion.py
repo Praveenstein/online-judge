@@ -26,8 +26,8 @@ from app.config import settings
 SYSTEM_PROMPT: str = (
     "You are a DSA coach. Given the raw content or a description of a coding problem, "
     "your goal is to: \n"
-    "1. Provide a concise but complete problem description in PLAIN TEXT. DO NOT use any Markdown styling (no bold, italic, or lists with symbols like ** or _).\n"
-    "2. Provide a section called 'Examples' with sample input/output as PLAIN TEXT.\n"
+    "1. Provide a concise but complete problem description. Use Markdown headings (e.g., ###) and lists (-, 1.) for structure.\n"
+    "2. Provide a section called 'Examples' with sample input/output. Use headings and lists where appropriate. DO NOT use triple backticks (```) or code blocks for examples, just use plain text.\n"
     "3. Generate a LeetCode-style starter code template (Python preference) in a class/function format. "
     "DO NOT provide the solution, just the definition and a 'pass' or 'return' statement.\n"
     "4. DO NOT give any hints, explanations, or extra text apart from the question and template.\n"
@@ -120,23 +120,71 @@ async def fetch_problem_details(url: str, title: str) -> List[Dict[str, Any]]:
             # Regular text (Description and Examples)
             text_part = part.strip()
             if text_part:
-                # Split by double newlines or single newlines to create separate paragraphs
-                # Removing any leading/trailing markdown-like artifacts just in case
-                text_part = re.sub(r"[*#_]", "", text_part) # Strip simple markdown
-                lines = [line.strip() for line in text_part.split("\n") if line.strip()]
+                # Split by newlines to process line by line
+                lines = [line for line in text_part.split("\n")]
                 for line in lines:
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+                    
+                    # Basic Markdown parsing for BlockNote block types
+                    block_type = "paragraph"
+                    props = {}
+                    text_content = stripped
+                    
+                    if stripped.startswith("#"):
+                        # Count the number of # symbols
+                        level = 0
+                        for char in stripped:
+                            if char == "#":
+                                level += 1
+                            else:
+                                break
+                        if level > 0 and stripped[level:level+1] == " ":
+                            block_type = "heading"
+                            props = {"level": min(level, 3)} # BlockNote supports levels 1-3
+                            text_content = stripped[level+1:].strip()
+                    elif stripped.startswith("- ") or stripped.startswith("* "):
+                        block_type = "bulletListItem"
+                        text_content = stripped[2:].strip()
+                    elif re.match(r"^\d+\.\s", stripped):
+                        block_type = "numberedListItem"
+                        text_content = re.sub(r"^\d+\.\s", "", stripped).strip()
+                    
+                    # Strip bold/italic markdown characters for simple text rendering
+                    text_content = re.sub(r"[*_`]", "", text_content)
+                    
+                    block = {
+                        "type": block_type,
+                        "content": [{"type": "text", "text": text_content, "styles": {}}]
+                    }
+                    if props:
+                        block["props"] = props
+                        
+                    blocks.append(block)
+        else:
+            # Code block 
+            code_text = part.strip()
+            # If there are multiple code blocks returned, the last one is the starter template.
+            # We check if it is the last code block or if it contains Python class/def keywords.
+            is_template = (i == len(parts) - 2) or ("def " in code_text) or ("class " in code_text)
+            
+            if is_template:
+                blocks.append({
+                    "type": "codeExecution",
+                    "props": {
+                        "language": "python",
+                        "code": code_text
+                    }
+                })
+            else:
+                for line in code_text.split("\n"):
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
                     blocks.append({
                         "type": "paragraph",
-                        "content": [{"type": "text", "text": line, "styles": {}}]
+                        "content": [{"type": "text", "text": stripped, "styles": {}}]
                     })
-        else:
-            # Code block (LeetCode-style template)
-            blocks.append({
-                "type": "codeExecution",
-                "props": {
-                    "language": "python",
-                    "code": part.strip()
-                }
-            })
             
     return blocks
