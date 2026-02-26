@@ -233,7 +233,7 @@ export default function Notes() {
 		try {
 			setLoading(true);
 			const token = localStorage.getItem("token");
-			const response = await axios.get(`${API_BASE}/api/notes`, {
+			const response = await axios.get(`${API_BASE}/api/notes/`, {
 				headers: { Authorization: `Bearer ${token}` }
 			});
 			setNotes(response.data);
@@ -277,7 +277,7 @@ export default function Notes() {
 	const handleCreateNote = async () => {
 		try {
 			const token = localStorage.getItem("token");
-			const response = await axios.post(`${API_BASE}/api/notes`, {
+			const response = await axios.post(`${API_BASE}/api/notes/`, {
 				title: "Untitled Note",
 				content: [{ type: "paragraph" }]
 			}, {
