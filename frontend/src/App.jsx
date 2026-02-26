@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { MantineProvider } from "@mantine/core";
+import "@mantine/core/styles.css";
 import Auth from "./components/Auth";
-import ProblemDashboard from "./components/ProblemDashboard";
-import ProblemSolve from "./pages/ProblemSolve";
+import Notes from "./pages/notes";
+import DSAChat from "./pages/DSAChat";
+import FlashCards from "./pages/FlashCards";
+import Layout from "./components/ui/Layout";
 
 function App() {
 	const [token, setToken] = useState(localStorage.getItem("token"));
@@ -23,20 +27,30 @@ function App() {
 	};
 
 	return (
-		<Router>
-			<div className="min-h-screen bg-white">
-				<Routes>
-					{/* Main Dashboard / List */}
-					<Route path="/" element={<ProblemDashboard onLogout={logout} />} />
+		<MantineProvider>
+			<Router>
+				<div className="min-h-screen bg-white">
+					<Routes>
+						<Route element={<Layout onLogout={logout} />}>
+							{/* Root Redirect */}
+							<Route path="/" element={<Navigate to="/notes" replace />} />
 
-					{/* New Solve Page */}
-					<Route path="/solve/:id" element={<ProblemSolve />} />
+							{/* Notes Page */}
+							<Route path="/notes" element={<Notes />} />
 
-					{/* Redirect any unknown routes to home */}
-					<Route path="*" element={<Navigate to="/" />} />
-				</Routes>
-			</div>
-		</Router>
+							{/* DSA Search Page */}
+							<Route path="/dsa-search" element={<DSAChat />} />
+
+							{/* Flash Cards Page */}
+							<Route path="/flash-cards" element={<FlashCards />} />
+						</Route>
+
+						{/* Redirect any unknown routes to notes */}
+						<Route path="*" element={<Navigate to="/notes" replace />} />
+					</Routes>
+				</div>
+			</Router>
+		</MantineProvider>
 	);
 }
 

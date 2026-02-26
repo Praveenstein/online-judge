@@ -245,3 +245,170 @@ class AICodeReviewResponse(BaseModel):
         default=None,
         description="Identifier of the model used for the review, if available.",
     )
+# ---------------------------------------------------------------------------
+# DSA Search schemas
+# ---------------------------------------------------------------------------
+
+
+class DSASearchRequest(BaseModel):
+    """Request body for querying top DSA questions via AI search.
+
+    Attributes:
+        query: The user's search query (e.g. 'Graph Traversal', 'Dynamic Programming').
+    """
+
+    query: str = Field(
+        ...,
+        min_length=1,
+        description="The DSA topic or specific question query to search for.",
+        examples=["Graph Traversal problems"],
+    )
+
+
+class DSAProblem(BaseModel):
+    """Schema for a single DSA problem result from AI search.
+
+    Attributes:
+        title: The name of the practice problem.
+        url: Link to the problem on a platform (LeetCode, GFG, etc.).
+        difficulty: Categorized difficulty level ('Easy', 'Medium', 'Hard').
+    """
+
+    title: str = Field(..., description="The title of the DSA problem.")
+    url: str = Field(..., description="A valid URL to the problem statement.")
+    difficulty: str = Field(
+        ..., description="The difficulty level as returned by the AI."
+    )
+
+
+class DSASearchResponse(BaseModel):
+    """Validated structured response for DSA search queries.
+
+    Attributes:
+        topic: The detected or user-provided topic of search.
+        problems: A list of relevant practice problems.
+    """
+
+    topic: str = Field(..., description="The DSA topic related to the search.")
+    problems: List[DSAProblem] = Field(
+        ..., description="Recommended practice problems from across the web."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Note schemas
+# ---------------------------------------------------------------------------
+from datetime import datetime
+
+
+class NoteBase(BaseModel):
+    """Base schema for a Note."""
+
+    title: str = Field(..., min_length=1, max_length=255)
+    content: List[dict] = Field(..., description="The BlockNote state stored as a list of blocks.")
+
+
+class NoteCreate(NoteBase):
+    """Schema for creating a new note."""
+
+    pass
+
+
+class NoteUpdate(BaseModel):
+    """Schema for updating an existing note."""
+
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    content: Optional[List[dict]] = Field(None)
+
+
+class NoteOut(NoteBase):
+    """Schema for returning note data."""
+
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class NoteFromProblem(BaseModel):
+    """Schema for creating a note from a DSA problem search result."""
+
+    title: str = Field(..., description="The title of the problem.")
+    url: str = Field(..., description="The URL of the problem statement.")
+    difficulty: Optional[str] = Field(None, description="The difficulty of the problem.")
+class AITestExecutionRequest(BaseModel):
+    """Request for running AI-generated tests against user code."""
+
+    code: str = Field(..., description="The user's source code.")
+    language: str = Field(..., description="Programming language (e.g. 'python').")
+    problem_description: str = Field(
+        ..., description="The problem statement to generate tests for."
+    )
+
+
+class AITestResult(BaseModel):
+    """Result of a single AI-generated test case."""
+
+    input_data: str = Field(..., description="The test input.")
+    expected_output: str = Field(..., description="Output from reference solution.")
+    actual_output: str = Field(..., description="Output from user's code.")
+    passed: bool = Field(..., description="True if outputs match.")
+    stderr: Optional[str] = Field(None, description="Error from user's code execution.")
+    exit_code: int = Field(..., description="Exit code from user's code execution.")
+
+
+class AITestExecutionResponse(BaseModel):
+    """Aggregate response for AI test execution."""
+
+    results: List[AITestResult] = Field(..., description="List of test results.")
+    summary: str = Field(..., description="A short summary of the results (e.g. '3/5 Passed').")
+
+
+# ---------------------------------------------------------------------------
+# Problem Attempt schemas
+# ---------------------------------------------------------------------------
+
+class ProblemAttemptBase(BaseModel):
+    """Base schema for a Problem Attempt."""
+    problem_title: str
+    problem_url: Optional[str] = None
+    difficulty: Optional[str] = None
+    code: str
+    language: str
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
+    exit_code: int
+    test_results: Optional[List[dict] | dict] = None
+    passed: bool
+
+
+class ProblemAttemptCreate(ProblemAttemptBase):
+    """Schema for creating a new problem attempt."""
+    pass
+
+
+class ProblemAttemptOut(ProblemAttemptBase):
+    """Schema for returning problem attempt data."""
+    id: int
+    user_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# Flash Card schemas
+# ---------------------------------------------------------------------------
+
+class FlashCard(BaseModel):
+    """Schema for a single practice flash card."""
+    front: str = Field(..., description="The question or problem statement part of the card.")
+    back: str = Field(..., description="The key insight, logic pattern, or solution snippet.")
+    problem_context: Optional[str] = Field(None, description="Title of the problem this card relates to.")
+
+
+class FlashCardResponse(BaseModel):
+    """Response containing a set of flash cards."""
+    cards: List[FlashCard]
+    summary: str

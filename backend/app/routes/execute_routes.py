@@ -19,8 +19,12 @@ from ..schemas import (
     TestExecutionRequest,
     TestExecutionResponse,
     TestCaseResult,
+    AITestExecutionRequest,
+    AITestExecutionResponse,
 )
 from ..services.compiler import CodeExecutor
+from ..services.ai_tester import run_ai_tests
+from ..services.security_scanner import check_security_rules
 
 router = APIRouter(prefix="/execute", tags=["compiler"])
 
@@ -63,6 +67,9 @@ async def run_code(
                       500 for internal server errors.
     """
     try:
+        # Check security rules first
+        check_security_rules(request.code, request.language)
+
         # Pass the request data to the service layer for execution
         result = await CodeExecutor.run(
             request.language, request.code, request.input_data
@@ -73,6 +80,9 @@ async def run_code(
         raise HTTPException(
             status_code=408, detail="Code execution timed out (Limit: 5s)"
         )
+    except HTTPException:
+        # Re-raise HTTP exceptions (like security violation 400) directly
+        raise
     except Exception as e:
         # Catch-all for other execution or system failures
         raise HTTPException(status_code=500, detail=str(e))
@@ -90,6 +100,9 @@ async def run_code_with_tests(
     in-memory test cases and returns per-test results.
     """
     try:
+        # Check security rules first
+        check_security_rules(request.code, request.language)
+        
         results: list[TestCaseResult] = []
         passed_tests: int = 0
 
@@ -126,5 +139,28 @@ async def run_code_with_tests(
         raise HTTPException(
             status_code=408, detail="Code execution timed out while running tests."
         )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ai-tests", response_model=AITestExecutionResponse)
+async def run_ai_generated_tests(
+    request: AITestExecutionRequest,
+    current_user: User = Depends(get_current_user),
+) -> AITestExecutionResponse:
+    """Run AI-generated tests against user code."""
+    try:
+        # Check security rules first
+        check_security_rules(request.code, request.language)
+        
+        return await run_ai_tests(
+            request.problem_description,
+            request.code,
+            request.language
+        )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

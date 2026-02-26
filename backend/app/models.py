@@ -4,9 +4,14 @@ This module contains the SQLAlchemy ORM models, specifically the User model
 which represents the 'users' table in the database.
 """
 
+# Built-In Imports.
+from typing import Optional
+
 # External Imports.
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Text, DateTime
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 # Local Imports.
 from .database import Base
@@ -29,6 +34,12 @@ class User(Base):
 
     # Relationship to problems
     problems: Mapped[list["Problem"]] = relationship(back_populates="creator")
+    
+    # Relationship to notes
+    notes: Mapped[list["Note"]] = relationship(back_populates="user")
+    
+    # Relationship to problem attempts
+    attempts: Mapped[list["ProblemAttempt"]] = relationship(back_populates="user")
 
 
 class Problem(Base):
@@ -53,3 +64,54 @@ class Problem(Base):
 
     # Relationship to the User model
     creator: Mapped["User"] = relationship(back_populates="problems")
+
+class Note(Base):
+    """Represents a persisted note with BlockNote content."""
+
+    __tablename__ = "notes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(index=True)
+    
+    # BlockNote state is stored as JSONB for better performance and indexing
+    content: Mapped[list] = mapped_column(JSONB, nullable=False)
+    
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationship to the User model
+    user: Mapped["User"] = relationship(back_populates="notes")
+
+
+class ProblemAttempt(Base):
+    """Represents a user's attempt at solving a problem."""
+
+    __tablename__ = "problem_attempts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    # Context info
+    problem_title: Mapped[str] = mapped_column(index=True)
+    problem_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    difficulty: Mapped[Optional[str]] = mapped_column(nullable=True)
+    
+    # Submission details
+    code: Mapped[str] = mapped_column(Text)
+    language: Mapped[str] = mapped_column()
+    
+    # Execution results
+    stdout: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    stderr: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    exit_code: Mapped[int] = mapped_column(default=0)
+    
+    # Test case results (stored as JSON)
+    test_results: Mapped[Optional[dict | list]] = mapped_column(JSONB, nullable=True)
+    passed: Mapped[bool] = mapped_column(default=False)
+    
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationship to the User model
+    user: Mapped["User"] = relationship(back_populates="attempts")
