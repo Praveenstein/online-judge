@@ -42,18 +42,6 @@ const Layout = ({ onLogout }) => {
 
                     <nav className="space-y-1">
                         <NavLink
-                            to="/"
-                            className={({ isActive }) =>
-                                `block px-4 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                                    ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
-                                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]'
-                                }`
-                            }
-                            end
-                        >
-                            Problems
-                        </NavLink>
-                        <NavLink
                             to="/notes"
                             className={({ isActive }) =>
                                 `block px-4 py-2 text-sm font-medium rounded-md transition-colors ${isActive
@@ -63,17 +51,6 @@ const Layout = ({ onLogout }) => {
                             }
                         >
                             Notes
-                        </NavLink>
-                        <NavLink
-                            to="/diagram"
-                            className={({ isActive }) =>
-                                `block px-4 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                                    ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
-                                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]'
-                                }`
-                            }
-                        >
-                            Diagrams
                         </NavLink>
                         <NavLink
                             to="/dsa-search"

@@ -3,9 +3,6 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-d
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import Auth from "./components/Auth";
-import ProblemDashboard from "./components/ProblemDashboard";
-import ProblemSolve from "./pages/ProblemSolve";
-import Diagram from "./components/Diagram";
 import Notes from "./pages/notes";
 import DSAChat from "./pages/DSAChat";
 import FlashCards from "./pages/FlashCards";
@@ -35,14 +32,8 @@ function App() {
 				<div className="min-h-screen bg-white">
 					<Routes>
 						<Route element={<Layout onLogout={logout} />}>
-							{/* Main Dashboard / List */}
-							<Route path="/" element={<ProblemDashboard />} />
-
-							{/* New Solve Page */}
-							<Route path="/solve/:id" element={<ProblemSolve />} />
-
-							{/* Diagram Page */}
-							<Route path="/diagram" element={<Diagram />} />
+							{/* Root Redirect */}
+							<Route path="/" element={<Navigate to="/notes" replace />} />
 
 							{/* Notes Page */}
 							<Route path="/notes" element={<Notes />} />
@@ -54,8 +45,8 @@ function App() {
 							<Route path="/flash-cards" element={<FlashCards />} />
 						</Route>
 
-						{/* Redirect any unknown routes to home */}
-						<Route path="*" element={<Navigate to="/" />} />
+						{/* Redirect any unknown routes to notes */}
+						<Route path="*" element={<Navigate to="/notes" replace />} />
 					</Routes>
 				</div>
 			</Router>
