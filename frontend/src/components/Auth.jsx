@@ -201,7 +201,7 @@ const Auth = ({ onLogin }) => {
 					</form>
 
 					<div className="mt-8 pt-6 border-t border-slate-100 text-center">
-						<p className="text-sm text-slate-600">
+						<p className="text-sm text-slate-600 mb-6">
 							{isLogin ? "Don't have an account? " : "Already have an account? "}
 							<button
 								type="button"
@@ -210,6 +210,9 @@ const Auth = ({ onLogin }) => {
 							>
 								{isLogin ? "Sign up" : "Log in"}
 							</button>
+						</p>
+						<p className="text-xs text-slate-400">
+							made with ❤️ by praveenstein
 						</p>
 					</div>
 				</div>

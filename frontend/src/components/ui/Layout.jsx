@@ -88,9 +88,13 @@ const Layout = ({ onLogout }) => {
             </aside>
 
             {/* Main Content */}
-            <main className={`main-content flex-1 ${isCollapsed ? 'main-content-expanded' : ''}`}>
-                <div className="page-container">
+            <main className={`main-content flex-1 flex flex-col ${isCollapsed ? 'main-content-expanded' : ''}`}>
+                <div className="page-container flex-1">
                     <Outlet />
+                </div>
+                {/* Footer */}
+                <div className="w-full text-center py-3 text-sm text-[var(--text-secondary)] mt-auto">
+                    made with ❤️ by praveenstein
                 </div>
             </main>
         </div>
