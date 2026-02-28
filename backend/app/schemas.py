@@ -412,3 +412,23 @@ class FlashCardResponse(BaseModel):
     """Response containing a set of flash cards."""
     cards: List[FlashCard]
     summary: str
+
+
+class SavedFlashCardCreate(BaseModel):
+    """Schema for saving a flash card to the database."""
+    front: str
+    back: str
+    problem_context: Optional[str] = None
+
+
+class SavedFlashCardOut(BaseModel):
+    """Schema for returning a saved flash card from the database."""
+    id: int
+    front: str
+    back: str
+    problem_context: Optional[str] = None
+    user_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+

@@ -40,6 +40,9 @@ class User(Base):
     
     # Relationship to problem attempts
     attempts: Mapped[list["ProblemAttempt"]] = relationship(back_populates="user")
+    
+    # Relationship to saved flash cards
+    saved_flashcards: Mapped[list["SavedFlashCard"]] = relationship(back_populates="user")
 
 
 class Problem(Base):
@@ -115,3 +118,21 @@ class ProblemAttempt(Base):
 
     # Relationship to the User model
     user: Mapped["User"] = relationship(back_populates="attempts")
+
+class SavedFlashCard(Base):
+    """Represents a persisted flash card practice object."""
+
+    __tablename__ = "saved_flashcards"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    # Card contents
+    front: Mapped[str] = mapped_column(Text)
+    back: Mapped[str] = mapped_column(Text)
+    problem_context: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationship to the User model
+    user: Mapped["User"] = relationship(back_populates="saved_flashcards")
