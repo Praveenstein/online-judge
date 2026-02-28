@@ -13,6 +13,9 @@ export const CodeExecutionBlock = createReactBlockSpec(
             code: {
                 default: "# Write your code here",
             },
+            showAiTests: {
+                default: false,
+            },
         },
         content: "none",
     },
@@ -126,24 +129,26 @@ export const CodeExecutionBlock = createReactBlockSpec(
                             >
                                 Run
                             </Button>
-                            <Button
-                                size="xs"
-                                variant="outline"
-                                color="violet"
-                                onClick={handleRunAiTests}
-                                loading={loading}
-                                leftSection={
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M12 2v8" />
-                                        <path d="M16 6l-4 4-4-4" />
-                                        <rect x="2" y="14" width="20" height="8" rx="2" />
-                                        <path d="M6 18h.01" />
-                                        <path d="M10 18h.01" />
-                                    </svg>
-                                }
-                            >
-                                AI Tests
-                            </Button>
+                            {(props.block.props.showAiTests || getMetadata().url) && (
+                                <Button
+                                    size="xs"
+                                    variant="outline"
+                                    color="violet"
+                                    onClick={handleRunAiTests}
+                                    loading={loading}
+                                    leftSection={
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M12 2v8" />
+                                            <path d="M16 6l-4 4-4-4" />
+                                            <rect x="2" y="14" width="20" height="8" rx="2" />
+                                            <path d="M6 18h.01" />
+                                            <path d="M10 18h.01" />
+                                        </svg>
+                                    }
+                                >
+                                    AI Tests
+                                </Button>
+                            )}
                             <Tooltip label="Toggle Results Sidebar">
                                 <ActionIcon
                                     variant="subtle"

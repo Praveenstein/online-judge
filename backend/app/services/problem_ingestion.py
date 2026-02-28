@@ -174,7 +174,8 @@ async def fetch_problem_details(url: str, title: str) -> List[Dict[str, Any]]:
                     "type": "codeExecution",
                     "props": {
                         "language": "python",
-                        "code": code_text
+                        "code": code_text,
+                        "showAiTests": True
                     }
                 })
             else:
