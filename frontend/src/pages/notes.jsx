@@ -65,22 +65,22 @@ const OutputSidebar = () => {
 								</Group>
 								<div className="space-y-1">
 									<Text size="10px" c="dimmed" fw={700} className="uppercase tracking-tighter">Input</Text>
-									<pre className="text-[10px] bg-[var(--bg-secondary)] p-2 rounded border border-[var(--border-default)]">{res.input_data}</pre>
+									<pre className="text-[10px] bg-[var(--bg-secondary)] p-2 rounded border border-[var(--border-default)] overflow-x-auto whitespace-pre-wrap break-words max-w-full">{res.input_data}</pre>
 								</div>
 								<div className="grid grid-cols-1 gap-2">
 									<div>
 										<Text size="10px" c="dimmed" fw={700} className="uppercase tracking-tighter">Expected</Text>
-										<pre className="text-[10px] bg-green-50/10 p-2 rounded border border-green-500/20 text-green-400 font-mono">{res.expected_output}</pre>
+										<pre className="text-[10px] bg-green-50/10 p-2 rounded border border-green-500/20 text-green-400 font-mono overflow-x-auto whitespace-pre-wrap break-words max-w-full">{res.expected_output}</pre>
 									</div>
 									<div>
 										<Text size="10px" c="dimmed" fw={700} className="uppercase tracking-tighter">Actual</Text>
-										<pre className={`text-[10px] p-2 rounded border font-mono ${res.passed ? 'bg-green-50/10 border-green-500/20 text-green-400' : 'bg-red-50/10 border-red-500/20 text-red-400'}`}>{res.actual_output}</pre>
+										<pre className={`text-[10px] p-2 rounded border font-mono overflow-x-auto whitespace-pre-wrap break-words max-w-full ${res.passed ? 'bg-green-50/10 border-green-500/20 text-green-400' : 'bg-red-50/10 border-red-500/20 text-red-400'}`}>{res.actual_output}</pre>
 									</div>
 								</div>
 								{res.stderr && (
 									<div className="mt-2">
 										<Text size="10px" c="red" fw={700} className="uppercase tracking-tighter">Error</Text>
-										<pre className="text-[10px] text-red-400 bg-red-50/10 p-2 rounded border border-red-500/20 mt-1">{res.stderr}</pre>
+										<pre className="text-[10px] text-red-400 bg-red-50/10 p-2 rounded border border-red-500/20 mt-1 overflow-x-auto whitespace-pre-wrap break-words max-w-full">{res.stderr}</pre>
 									</div>
 								)}
 							</Stack>
@@ -132,7 +132,7 @@ const OutputSidebar = () => {
 											<div className="w-2 h-2 rounded-full bg-green-500"></div>
 											<Text size="xs" fw={700} c="dimmed" className="uppercase tracking-wider">Standard Output</Text>
 										</div>
-										<pre className="output-pre text-green-400">
+										<pre className="output-pre text-green-400 overflow-x-auto whitespace-pre-wrap break-words max-w-full">
 											{output.stdout}
 										</pre>
 									</div>
@@ -143,7 +143,7 @@ const OutputSidebar = () => {
 											<div className="w-2 h-2 rounded-full bg-red-500"></div>
 											<Text size="xs" fw={700} c="dimmed" className="uppercase tracking-wider">Standard Error</Text>
 										</div>
-										<pre className="output-pre text-red-400 border-red-900/30">
+										<pre className="output-pre text-red-400 border-red-900/30 overflow-x-auto whitespace-pre-wrap break-words max-w-full">
 											{output.stderr}
 										</pre>
 									</div>
