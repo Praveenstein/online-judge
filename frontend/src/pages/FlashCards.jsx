@@ -17,9 +17,15 @@ import {
     Divider,
     Box
 } from '@mantine/core';
+import ReactMarkdown from 'react-markdown';
 
 const FlashCardItem = ({ card }) => {
     const [flipped, setFlipped] = useState(false);
+
+    // Reset flip state when card changes
+    useEffect(() => {
+        setFlipped(false);
+    }, [card]);
 
     return (
         <Card
@@ -29,11 +35,14 @@ const FlashCardItem = ({ card }) => {
             p={0}
             className="flashcard-container"
             style={{
-                height: '350px',
+                height: '450px',
                 cursor: 'pointer',
                 perspective: '1000px',
                 background: 'transparent',
-                border: 'none'
+                border: 'none',
+                maxWidth: '800px',
+                width: '100%',
+                margin: '0 auto'
             }}
             onClick={() => setFlipped(!flipped)}
         >
@@ -42,7 +51,6 @@ const FlashCardItem = ({ card }) => {
                     position: 'relative',
                     width: '100%',
                     height: '100%',
-                    textAlign: 'center',
                     transition: 'transform 0.6s',
                     transformStyle: 'preserve-3d',
                     transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
@@ -60,18 +68,34 @@ const FlashCardItem = ({ card }) => {
                         backfaceVisibility: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
                         backgroundColor: 'var(--bg-primary)',
-                        gap: '20px'
+                        overflowY: 'auto'
                     }}
                 >
-                    <Badge variant="light" color="blue">Question / Concept</Badge>
-                    <Title order={3} className="text-center">{card.front}</Title>
-                    {card.problem_context && (
-                        <Text size="xs" c="dimmed">Context: {card.problem_context}</Text>
-                    )}
-                    <Text size="xs" c="dimmed" mt="xl">Click to reveal answer</Text>
+                    <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                        <Badge variant="light" color="blue" mb="md">Question / Concept</Badge>
+                        <Box style={{ fontSize: '1.25rem', fontWeight: 600, textAlign: 'center', width: '100%' }}>
+                            <ReactMarkdown
+                                components={{
+                                    code({ node, inline, className, children, ...props }) {
+                                        return (
+                                            <code className="px-1.5 py-0.5 rounded-md bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-mono text-sm" {...props}>
+                                                {children}
+                                            </code>
+                                        )
+                                    }
+                                }}
+                            >
+                                {card.front}
+                            </ReactMarkdown>
+                        </Box>
+                        {card.problem_context && (
+                            <Text size="xs" c="dimmed" mt="md">Context: {card.problem_context}</Text>
+                        )}
+                    </Box>
+                    <Center mt="md">
+                        <Text size="xs" c="dimmed">Click to reveal answer</Text>
+                    </Center>
                 </Paper>
 
                 {/* Back */}
@@ -86,16 +110,56 @@ const FlashCardItem = ({ card }) => {
                         backfaceVisibility: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
                         backgroundColor: 'var(--bg-secondary)',
                         transform: 'rotateY(180deg)',
-                        gap: '20px'
+                        overflowY: 'auto'
                     }}
                 >
-                    <Badge variant="light" color="green">Insight / Logic</Badge>
-                    <Text size="md" className="text-center">{card.back}</Text>
-                    <Text size="xs" c="dimmed" mt="xl">Click to flip back</Text>
+                    <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                        <Badge variant="light" color="green" mb="md">Insight / Logic</Badge>
+                        <Box style={{ width: '100%', textAlign: 'left', fontSize: '1rem' }} className="markdown-body">
+                            <ReactMarkdown
+                                components={{
+                                    code({ node, inline, className, children, ...props }) {
+                                        const match = /language-(\w+)/.exec(className || '')
+                                        return !inline ? (
+                                            <code className={className} {...props}>
+                                                {children}
+                                            </code>
+                                        ) : (
+                                            <code className="px-1.5 py-0.5 rounded-md bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-mono text-sm inline-block" {...props}>
+                                                {children}
+                                            </code>
+                                        )
+                                    },
+                                    pre({ node, children, ...props }) {
+                                        return (
+                                            <pre className="p-4 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-default)] overflow-x-auto my-4 text-sm" {...props}>
+                                                {children}
+                                            </pre>
+                                        )
+                                    },
+                                    p({ node, children, ...props }) {
+                                        return <p style={{ marginBottom: '12px' }} {...props}>{children}</p>
+                                    },
+                                    ul({ node, children, ...props }) {
+                                        return <ul style={{ paddingLeft: '20px', marginBottom: '12px', listStyleType: 'disc' }} {...props}>{children}</ul>
+                                    },
+                                    ol({ node, children, ...props }) {
+                                        return <ol style={{ paddingLeft: '20px', marginBottom: '12px', listStyleType: 'decimal' }} {...props}>{children}</ol>
+                                    },
+                                    h1({ node, children, ...props }) { return <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '12px', marginTop: '16px' }} {...props}>{children}</h1> },
+                                    h2({ node, children, ...props }) { return <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '12px', marginTop: '16px' }} {...props}>{children}</h2> },
+                                    h3({ node, children, ...props }) { return <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '12px', marginTop: '16px' }} {...props}>{children}</h3> },
+                                }}
+                            >
+                                {card.back}
+                            </ReactMarkdown>
+                        </Box>
+                    </Box>
+                    <Center mt="md">
+                        <Text size="xs" c="dimmed">Click to flip back</Text>
+                    </Center>
                 </Paper>
             </div>
         </Card>
@@ -107,11 +171,13 @@ const FlashCards = () => {
     const [loading, setLoading] = useState(false);
     const [summary, setSummary] = useState("");
     const [error, setError] = useState(null);
+    const [currentIndex, setCurrentIndex] = useState(0);
     const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
     const fetchCards = async () => {
         setLoading(true);
         setError(null);
+        setCurrentIndex(0);
         try {
             const token = localStorage.getItem("token");
             const response = await axios.get(`${API_BASE}/api/flash-cards/generate`, {
@@ -129,6 +195,18 @@ const FlashCards = () => {
     useEffect(() => {
         fetchCards();
     }, []);
+
+    const handleNext = () => {
+        if (currentIndex < cards.length - 1) {
+            setCurrentIndex(currentIndex + 1);
+        }
+    };
+
+    const handlePrev = () => {
+        if (currentIndex > 0) {
+            setCurrentIndex(currentIndex - 1);
+        }
+    };
 
     return (
         <Container size="md" className="py-12">
@@ -154,13 +232,30 @@ const FlashCards = () => {
                     </Paper>
                 ) : cards.length > 0 ? (
                     <Stack gap="xl">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {cards.map((card, idx) => (
-                                <FlashCardItem key={idx} card={card} />
-                            ))}
-                        </div>
-                        <Center>
-                            <Button variant="subtle" size="md" onClick={fetchCards}>Regenerate Cards</Button>
+                        <FlashCardItem card={cards[currentIndex]} />
+
+                        <Group justify="center" mt="md" align="center">
+                            <Button
+                                variant="default"
+                                onClick={handlePrev}
+                                disabled={currentIndex === 0}
+                            >
+                                Previous
+                            </Button>
+                            <Text size="sm" fw={500} style={{ minWidth: '60px', textAlign: 'center' }}>
+                                {currentIndex + 1} / {cards.length}
+                            </Text>
+                            <Button
+                                variant="default"
+                                onClick={handleNext}
+                                disabled={currentIndex === cards.length - 1}
+                            >
+                                Next
+                            </Button>
+                        </Group>
+
+                        <Center mt="md">
+                            <Button variant="subtle" size="xs" onClick={fetchCards}>Regenerate Cards</Button>
                         </Center>
                     </Stack>
                 ) : (
