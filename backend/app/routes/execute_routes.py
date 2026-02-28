@@ -8,7 +8,7 @@ through the CodeExecutor, and returning the execution results.
 import subprocess
 
 # External Imports.
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 # Local Imports.
 from ..auth.utils import get_current_user
@@ -25,6 +25,7 @@ from ..schemas import (
 from ..services.compiler import CodeExecutor
 from ..services.ai_tester import run_ai_tests
 from ..services.security_scanner import check_security_rules
+from ..limiter import limiter
 
 router = APIRouter(prefix="/execute", tags=["compiler"])
 
@@ -49,14 +50,17 @@ SUM_TWO_NUMBERS_TEST_CASES = [
 
 
 @router.post("/", response_model=ExecutionResponse)
+@limiter.limit("10/minute")
 async def run_code(
-    request: ExecutionRequest,
+    request: Request,
+    payload: ExecutionRequest,
     current_user: User = Depends(get_current_user),
 ) -> ExecutionResponse:
     """Endpoint to receive and execute code snippets.
 
     Args:
-        request: An ExecutionRequest object containing code, language, and input.
+        request: The FastAPI Request (for rate limiting).
+        payload: An ExecutionRequest object containing code, language, and input.
         current_user: The authenticated user (required).
 
     Returns:
@@ -68,11 +72,11 @@ async def run_code(
     """
     try:
         # Check security rules first
-        check_security_rules(request.code, request.language)
+        check_security_rules(payload.code, payload.language)
 
         # Pass the request data to the service layer for execution
         result = await CodeExecutor.run(
-            request.language, request.code, request.input_data
+            payload.language, payload.code, payload.input_data
         )
         return result
     except subprocess.TimeoutExpired:
@@ -89,8 +93,10 @@ async def run_code(
 
 
 @router.post("/tests", response_model=TestExecutionResponse)
+@limiter.limit("5/minute")
 async def run_code_with_tests(
-    request: TestExecutionRequest,
+    request: Request,
+    payload: TestExecutionRequest,
     current_user: User = Depends(get_current_user),
 ) -> TestExecutionResponse:
     """Execute code against a predefined set of test cases.
@@ -101,14 +107,14 @@ async def run_code_with_tests(
     """
     try:
         # Check security rules first
-        check_security_rules(request.code, request.language)
+        check_security_rules(payload.code, payload.language)
         
         results: list[TestCaseResult] = []
         passed_tests: int = 0
 
         for test in SUM_TWO_NUMBERS_TEST_CASES:
             exec_result = await CodeExecutor.run(
-                request.language, request.code, test["input_data"]
+                payload.language, payload.code, test["input_data"]
             )
 
             actual_stdout = exec_result.get("stdout", "").strip()
@@ -146,19 +152,21 @@ async def run_code_with_tests(
 
 
 @router.post("/ai-tests", response_model=AITestExecutionResponse)
+@limiter.limit("5/minute")
 async def run_ai_generated_tests(
-    request: AITestExecutionRequest,
+    request: Request,
+    payload: AITestExecutionRequest,
     current_user: User = Depends(get_current_user),
 ) -> AITestExecutionResponse:
     """Run AI-generated tests against user code."""
     try:
         # Check security rules first
-        check_security_rules(request.code, request.language)
+        check_security_rules(payload.code, payload.language)
         
         return await run_ai_tests(
-            request.problem_description,
-            request.code,
-            request.language
+            payload.problem_description,
+            payload.code,
+            payload.language
         )
     except HTTPException:
         raise

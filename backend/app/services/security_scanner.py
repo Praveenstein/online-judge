@@ -6,17 +6,17 @@ SECURITY_RULES = {
     "python": [
         {
             "id": "python-jailbreak-imports",
-            "pattern": r"^\s*(?:import\s+[\w\s,\.]*\b(?:os|subprocess|sys)\b|from\s+(?:os|subprocess|sys)\b)",
+            "pattern": r"(?i)(___?import___\s*\(|import\s+(?:os|subprocess|sys|pty|shlex|commands)\b|from\s+(?:os|subprocess|sys|pty|shlex|commands)\b|__builtins__|getattr\s*\(\s*__import__)",
             "message": "Critical: Access to system-level modules is prohibited."
         },
         {
             "id": "python-network-access",
-            "pattern": r"^\s*(?:import\s+[\w\s,\.]*\b(?:socket|requests)\b|from\s+(?:socket|requests)\b)|.*\bsocket\.socket\s*\(",
+            "pattern": r"(?i)(import\s+(?:socket|requests|urllib|httplib|ftp|telnet|xmlrpc)\b|from\s+(?:socket|requests|urllib|httplib|ftp|telnet|xmlrpc)\b|\bsocket\.socket\s*\()",
             "message": "Security: Network access is disabled."
         },
         {
             "id": "python-dynamic-execution",
-            "pattern": r"\b(?:eval|exec|__import__)\s*\(",
+            "pattern": r"(?i)\b(?:eval|exec|compile|globals|locals)\s*\(",
             "message": "Security: Dynamic code execution is forbidden."
         }
     ],
@@ -80,3 +80,38 @@ def check_security_rules(code: str, language: str) -> None:
                     status_code=400,
                     detail=f"Security Violation: {rule['message']} (Line {line_num})"
                 )
+
+def sanitize_ai_prompt(prompt: str, max_length: int = 2000) -> str:
+    """
+    Sanitizes user input intended for an AI prompt to mitigate basic prompt injection.
+    """
+    if not prompt:
+        return ""
+    
+    # 1. Truncate to reasonable length to prevent payload stuffing
+    prompt = prompt[:max_length]
+    
+    # 2. Block simple explicit injection attempts
+    banned_phrases = [
+        "ignore previous instructions", 
+        "ignore all previous", 
+        "you are now", 
+        "system prompt", 
+        "bypass", 
+        "jailbreak",
+        "forget previous"
+    ]
+    
+    lower_prompt = prompt.lower()
+    for phrase in banned_phrases:
+        if phrase in lower_prompt:
+            raise HTTPException(
+                status_code=400,
+                detail="Security Violation: Prohibited phrasing detected in prompt."
+            )
+            
+    # 3. Strip any weird control characters that might confuse the model
+    prompt = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\xff]', '', prompt)
+    
+    return prompt
+

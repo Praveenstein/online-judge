@@ -20,6 +20,7 @@ from pydantic_ai.common_tools.tavily import tavily_search_tool
 # Local Imports.
 from app.config import settings
 from app.schemas import DSASearchResponse
+from app.services.security_scanner import sanitize_ai_prompt
 
 if TYPE_CHECKING:
     pass
@@ -91,7 +92,8 @@ async def run_dsa_search(query: str) -> DSASearchResponse:
     Returns:
         A DSASearchResponse instance containing a list of problems.
     """
+    safe_query = sanitize_ai_prompt(query, max_length=300)
     agent = get_agent()
-    result = await agent.run(query)
+    result = await agent.run(safe_query)
     # result.output is an instance of DSASearchResponse
     return result.output

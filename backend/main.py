@@ -24,6 +24,10 @@ from app.routes import (
     attempts,
     flash_cards,
 )
+from app.config import settings
+from app.limiter import limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
 
 @asynccontextmanager
@@ -51,11 +55,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure Cross-Origin Resource Sharing (CORS)
+# Restrict this to the intended frontend URL in production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

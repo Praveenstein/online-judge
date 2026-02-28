@@ -24,6 +24,7 @@ from pydantic_ai.exceptions import UnexpectedModelBehavior
 from app.config import settings
 from app.services.compiler import CodeExecutor
 from app.schemas import AITestResult, AITestExecutionResponse
+from app.services.security_scanner import sanitize_ai_prompt
 
 # ---------------------------------------------------------------------------
 # Internal Schemas for AI Output
@@ -114,8 +115,11 @@ async def run_ai_tests(
         "- The 'function_name' in your output should be the main method/function you are calling."
         "- Your harness should not contain the solution itself, just the part to execute the given code"
     )
+    
+    safe_prompt = sanitize_ai_prompt(prompt, max_length=5000)
+    
     try:
-        result = await agent.run(prompt)
+        result = await agent.run(safe_prompt)
     except UnexpectedModelBehavior as e:
         # UnexpectedModelBehavior often contains details about what went wrong
         raise ValueError(f"AI Test Generation Failed (Validation): {str(e)}")

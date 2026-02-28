@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     CEREBRAS_API_KEY: str = ""
     CEREBRAS_MODEL: str = "gpt-oss-120b"
     TAVILY_API_KEY: str = ""
+    
+    FRONTEND_URL: str = "http://localhost:5173"
 
     @property
     def DATABASE_URL(self) -> str:
