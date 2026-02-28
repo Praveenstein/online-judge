@@ -132,8 +132,7 @@ async def run_ai_tests(
         # Combine reference code (function def) and harness
         ref_full_code = f"{ai_data.reference_solution}\n\n{ai_data.harness_code}"
         ref_exec = await CodeExecutor.run("python", ref_full_code, test.input_data)
-        print(ref_full_code)
-        print("=====" * 30)
+        
         if ref_exec.get("exit_code") != 0:
             # If reference solution fails, we might have a bad AI generation
             # We'll record this as a failure for the test case with a note
@@ -147,13 +146,10 @@ async def run_ai_tests(
             # 2. Run User Code
             # Append the AI's harness to the user's function definition
             user_full_code = f"{user_code}\n\n{ai_data.harness_code}"
-            print(user_full_code)
-            print("+++++" * 30)
             user_exec = await CodeExecutor.run(language, user_full_code, test.input_data)
             actual_output = user_exec.get("stdout", "").strip()
             stderr = user_exec.get("stderr")
-            print(test.input_data)
-            print(expected_output)
+            
             # 3. Validate
             exit_code = user_exec.get("exit_code", 1)
             # Match if exit code is 0 and output is same (ignoring trailing whitespace)
