@@ -131,6 +131,7 @@ async def run_ai_tests(
         # 1. Run Reference Solution to get expected output
         # Combine reference code (function def) and harness
         ref_full_code = f"{ai_data.reference_solution}\n\n{ai_data.harness_code}"
+
         ref_exec = await CodeExecutor.run("python", ref_full_code, test.input_data)
         
         if ref_exec.get("exit_code") != 0:

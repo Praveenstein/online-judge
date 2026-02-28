@@ -23,119 +23,169 @@ import psutil
 import time
 
 async def execute_with_limits(cmd: list[str], input_data: str, timeout: int = 5, max_memory_mb: int = 250, shell: bool = False) -> Dict[str, Any]:
-    """Runs a command with timeout and memory limits asynchronously using Popen.
+    """Runs a command with timeout and memory limits asynchronously.
     
     Args:
         cmd: The command to execute.
         input_data: The input string for stdin.
         timeout: Maximum execution time in seconds.
         max_memory_mb: Maximum allowed memory in MB.
+        shell: Whether to run the command in a shell.
         
     Returns:
         A dictionary containing stdout, stderr, and exit_code.
     """
+    import sys
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"}
+    
     try:
-        # Run process non-blocking using the standard subprocess module
-        if shell:
-            cmd_str = " ".join(cmd)
-            process = subprocess.Popen(
-                cmd_str,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                env={**os.environ, "PYTHONIOENCODING": "utf-8"},
-                shell=True
-            )
-        else:
-            process = subprocess.Popen(
-                cmd,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                env={**os.environ, "PYTHONIOENCODING": "utf-8"}
-            )
+        try:
+            if shell:
+                cmd_str = " ".join(cmd)
+                process = await asyncio.create_subprocess_shell(
+                    cmd_str,
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    env=env
+                )
+            else:
+                process = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    env=env
+                )
+            is_async_proc = True
+        except NotImplementedError:
+            # Fallback for Windows when event loop (like SelectorEventLoop) doesn't support async subprocesses
+            if shell:
+                cmd_str = " ".join(cmd)
+                process = subprocess.Popen(
+                    cmd_str,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    env=env,
+                    shell=True
+                )
+            else:
+                process = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    env=env
+                )
+            is_async_proc = False
     except Exception as e:
         return {"stdout": "", "stderr": f"Failed to start process: {repr(e)}", "exit_code": 1}
-        
+
     max_memory_bytes = max_memory_mb * 1024 * 1024
-    start_time = time.time()
-    
-    # Write input explicitly if present, then close stdin
-    if input_data and process.stdin:
-        try:
-            process.stdin.write(input_data.encode('utf-8'))
-            process.stdin.flush()
-        except OSError:
-            pass
-    if process.stdin:
-        process.stdin.close()
-        
-    limit_reason = None
-        
-    # Asynchronously poll for the process to finish
-    while process.poll() is None:
-        try:
-            p = psutil.Process(process.pid)
-            # Sum memory of process and its children
-            current_mem = p.memory_info().rss
-            children = p.children(recursive=True)
-            for child in children:
-                try:
-                    current_mem += child.memory_info().rss
-                except psutil.NoSuchProcess:
-                    pass
-                    
-            if current_mem > max_memory_bytes:
-                # Force kill all children first, then parent
+
+    async def _monitor_memory() -> bool:
+        """Polls memory every 100ms. Returns True if memory limit exceeded."""
+        while (process.returncode if is_async_proc else process.poll()) is None:
+            try:
+                p = psutil.Process(process.pid)
+                current_mem = p.memory_info().rss
+                children = p.children(recursive=True)
                 for child in children:
                     try:
-                        child.kill()
+                        current_mem += child.memory_info().rss
                     except psutil.NoSuchProcess:
                         pass
-                process.kill()
-                limit_reason = "Memory Limit Exceeded"
-                break
                 
-        except psutil.NoSuchProcess:
-            break
-            
-        if time.time() - start_time > timeout:
+                if current_mem > max_memory_bytes:
+                    for child in children:
+                        try:
+                            child.kill()
+                        except psutil.NoSuchProcess:
+                            pass
+                    try:
+                        p.kill()
+                    except psutil.NoSuchProcess:
+                        pass
+                    try:
+                        process.kill()
+                    except OSError:
+                        pass
+                    return True
+            except psutil.NoSuchProcess:
+                break
+            except Exception:
+                pass
+            await asyncio.sleep(0.1)
+        return False
+
+    input_bytes = input_data.encode('utf-8') if input_data else b""
+    
+    async def task_a():
+        if is_async_proc:
+            return await asyncio.wait_for(process.communicate(input=input_bytes), timeout=timeout)
+        else:
             try:
-                # Same for time limit, kill children to prevent zombies on Linux
+                loop = asyncio.get_running_loop()
+                def run_comm():
+                    return process.communicate(input=input_bytes, timeout=timeout)
+                return await loop.run_in_executor(None, run_comm)
+            except subprocess.TimeoutExpired:
+                raise asyncio.TimeoutError()
+        
+    comm_task = asyncio.create_task(task_a())
+    mem_task = asyncio.create_task(_monitor_memory())
+    
+    limit_reason = None
+    stdout_data, stderr_data = b"", b""
+    exit_code = 1
+
+    try:
+        done, pending = await asyncio.wait(
+            [comm_task, mem_task],
+            return_when=asyncio.FIRST_COMPLETED
+        )
+        
+        if mem_task in done and mem_task.result() is True:
+            limit_reason = "Memory Limit Exceeded"
+        elif comm_task in done:
+            try:
+                stdout_data, stderr_data = comm_task.result()
+                if is_async_proc:
+                    exit_code = process.returncode if process.returncode is not None else 1
+                else:
+                    exit_code = process.poll() if process.poll() is not None else 1
+            except asyncio.TimeoutError:
+                limit_reason = "Time Limit Exceeded"
+            except Exception as e:
+                limit_reason = f"Execution Error: {repr(e)}"
+                
+    finally:
+        if not comm_task.done():
+            comm_task.cancel()
+        if not mem_task.done():
+            mem_task.cancel()
+            
+        if limit_reason or (process.returncode if is_async_proc else process.poll()) is None:
+            try:
                 p = psutil.Process(process.pid)
                 for child in p.children(recursive=True):
                     try:
                         child.kill()
                     except psutil.NoSuchProcess:
                         pass
-                process.kill()
-            except (OSError, psutil.NoSuchProcess):
-                pass
-            limit_reason = "Time Limit Exceeded"
-            break
-            
-        await asyncio.sleep(0.05)  # Poll every 50ms
-
-    # Collect the outputs
-    stdout_data, stderr_data = b"", b""
-    try:
-        stdout_data, stderr_data = process.communicate(timeout=int(timeout))
-    except Exception:
-        try:
-            p = psutil.Process(process.pid)
-            for child in p.children(recursive=True):
                 try:
-                    child.kill()
+                    p.kill()
                 except psutil.NoSuchProcess:
                     pass
-        except Exception:
-            pass
-        process.kill()
-        try:
-            stdout_data, stderr_data = process.communicate(timeout=1)
-        except Exception:
-            pass
-            
+            except Exception:
+                pass
+                
+            try:
+                process.kill()
+            except OSError:
+                pass
+
     if limit_reason:
         return {
             "stdout": "",
@@ -144,9 +194,9 @@ async def execute_with_limits(cmd: list[str], input_data: str, timeout: int = 5,
         }
         
     return {
-        "stdout": stdout_data.decode('utf-8', errors='replace'),
-        "stderr": stderr_data.decode('utf-8', errors='replace'),
-        "exit_code": process.returncode
+        "stdout": stdout_data.decode('utf-8', errors='replace') if stdout_data else "",
+        "stderr": stderr_data.decode('utf-8', errors='replace') if stderr_data else "",
+        "exit_code": exit_code
     }
 
 
