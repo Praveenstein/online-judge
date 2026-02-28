@@ -59,10 +59,12 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure Cross-Origin Resource Sharing (CORS)
-# Restrict this to the intended frontend URL in production
+# Parse the frontend URLs into a list
+allowed_origins = [url.strip() for url in settings.FRONTEND_URLS.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

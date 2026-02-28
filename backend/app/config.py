@@ -35,9 +35,8 @@ class Settings(BaseSettings):
     # Optional: Cerebras API key and model for AI code review (set in .env).
     CEREBRAS_API_KEY: str = ""
     CEREBRAS_MODEL: str = "gpt-oss-120b"
-    TAVILY_API_KEY: str = ""
-    
-    FRONTEND_URL: str = "http://localhost:5173"
+    # Allowed frontend domains for CORS (can be comma-separated in .env)
+    FRONTEND_URLS: str = "http://localhost:5173,https://online-judge-bice.vercel.app"
 
     @property
     def DATABASE_URL(self) -> str:
