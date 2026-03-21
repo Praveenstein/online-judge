@@ -33,7 +33,7 @@ def _make_flashcard_agent() -> Agent[None, FlashCardList]:
     if not cerebras_key:
         raise ValueError("CEREBRAS_API_KEY is not set.")
 
-    model_name = getattr(settings, "CEREBRAS_MODEL", "") or "gpt-oss-120b"
+    model_name = getattr(settings, "CEREBRAS_MODEL", "") or "qwen-3-235b-a22b-instruct-2507"
     model = CerebrasModel(
         model_name,
         provider=CerebrasProvider(api_key=cerebras_key),

@@ -34,7 +34,7 @@ SYSTEM_PROMPT: str = (
     "Return the description and examples first, then the code block inside triple backticks."
 )
 
-DEFAULT_MODEL_NAME: str = "gpt-oss-120b"
+DEFAULT_MODEL_NAME: str = "qwen-3-235b-a22b-instruct-2507"
 
 
 def _make_agent() -> Agent[None, str]:

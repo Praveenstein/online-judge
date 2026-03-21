@@ -34,7 +34,7 @@ class Settings(BaseSettings):
 
     # Optional: Cerebras API key and model for AI code review (set in .env).
     CEREBRAS_API_KEY: str = ""
-    CEREBRAS_MODEL: str = "gpt-oss-120b"
+    CEREBRAS_MODEL: str = "qwen-3-235b-a22b-instruct-2507"
     # Allowed frontend domains for CORS (can be comma-separated in .env)
     FRONTEND_URLS: str = "http://localhost:5173,https://online-judge-bice.vercel.app"
 
